@@ -25,7 +25,7 @@ Then the dependency:
 
 ```kotlin
 dependencies {
-    implementation("com.github.intunix:intunix-android:1.5.3")
+    implementation("com.github.intunix:intunix-android:1.5.4")
 }
 ```
 
@@ -81,6 +81,17 @@ Every call is safe from any thread.
 fun OrderDone() {
     IntunixForm(form = "post-order", modifier = Modifier.padding(16.dp))
 }
+```
+
+In a View-based screen (or any activity, including ones that aren't `ComponentActivity`):
+
+```kotlin
+val form = IntunixFormView(context).apply {
+    setForm("post-order")
+    onFinished = { /* hide it */ }
+    onHeightChanged = { px -> /* if you size it yourself */ }
+}
+container.addView(form)
 ```
 
 Only one form shows at a time; others wait their turn. A form waits for the app to be in the
