@@ -76,9 +76,30 @@ object Intunix {
             val c = IntunixClient(cfg, PrefsStore(app), ActivityPresenter(app, foreground) { resumed?.get() }, scope, log)
             client = c
             app.registerActivityLifecycleCallbacks(lifecycle)
+            // init can run after the first screen is up (React Native, Flutter): catch up on state
+            // the lifecycle callbacks missed, or forms would wait for the next foreground.
+            if (context is Activity && !context.isFinishing) {
+                resumed = WeakReference(context)
+                started = maxOf(started, 1)
+                foreground.value = true
+            } else {
+                val info = android.app.ActivityManager.RunningAppProcessInfo()
+                android.app.ActivityManager.getMyMemoryState(info)
+                if (info.importance <= android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE) foreground.value = true
+            }
             c.start()
             while (early.isNotEmpty()) early.removeFirst()(c)
         }
+    }
+
+    /**
+     * The activity forms present from, for hosts that start the SDK after their first screen
+     * (React Native, Flutter). Native apps don't need this.
+     */
+    @JvmStatic
+    fun attach(activity: Activity) = main {
+        if (resumed?.get() == null) resumed = WeakReference(activity)
+        if (!foreground.value && !activity.isFinishing) { started = maxOf(started, 1); foreground.value = true }
     }
 
     /** Identify the signed-in user. Call on every login. */
