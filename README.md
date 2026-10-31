@@ -25,7 +25,7 @@ Then the dependency:
 
 ```kotlin
 dependencies {
-    implementation("com.github.intunix:intunix-android:1.5.1")
+    implementation("com.github.intunix:intunix-android:1.5.2")
 }
 ```
 
@@ -97,6 +97,9 @@ exit intent) are ignored. A form set to show on **Web** only never shows in apps
 The same endpoints as the web SDK, with channel `mobile_sdk` and the header
 `x-intunix-sdk: android/<version>`. Events that fail to upload are kept on the device and
 retried for a day. A session ends after 30 minutes in the background.
+
+The SDK keeps its anonymous id and per-form show history in the `intunix` SharedPreferences
+file. Android Auto Backup restores it after a reinstall unless your backup rules exclude it.
 
 ## Develop
 

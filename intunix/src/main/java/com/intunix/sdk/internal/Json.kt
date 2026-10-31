@@ -33,8 +33,11 @@ internal fun toJson(v: Any?): Any = when (v) {
     is Map<*, *> -> JSONObject().also { o -> v.forEach { (k, x) -> o.put(k.toString(), toJson(x)) } }
     is Iterable<*> -> JSONArray().also { a -> v.forEach { a.put(toJson(it)) } }
     is Array<*> -> JSONArray().also { a -> v.forEach { a.put(toJson(it)) } }
-    is Float -> v.toDouble()
-    else -> v
+    // org.json throws on NaN / Infinity; JSON.stringify on web writes null.
+    is Double -> if (v.isFinite()) v else JSONObject.NULL
+    is Float -> if (v.isFinite()) v.toDouble() else JSONObject.NULL
+    is Number, is String, is Boolean -> v
+    else -> v.toString()
 }
 
 /** `===` as JavaScript sees JSON values: numbers compare by value whatever their Kotlin type. */

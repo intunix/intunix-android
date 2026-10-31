@@ -22,6 +22,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,9 +66,17 @@ internal class FormHost(
         exp.reviewRequest, exp.id, cb.clientResponseId, content.brand.color, cb.onReviewEvent, openUrl,
     ) { finish() }
 
+    private var impressed = false
+
     fun state() = version.let { runner.state() }
     fun isLastPage() = runner.isLastPage()
-    fun impression() = cb.onImpression()
+
+    /** Once per form instance, however often the view is (re)composed. */
+    fun impression() {
+        if (impressed) return
+        impressed = true
+        cb.onImpression()
+    }
 
     private fun bump() { version++ }
 
@@ -122,10 +132,14 @@ internal class FormHost(
 @Composable
 internal fun FeedbackForm(host: FormHost, modifier: Modifier = Modifier) {
     val content = host.content
-    val state = host.state()
+    val live = host.state()
+    // Keep drawing the last page while the frame animates out; DONE has nothing to show.
+    val last = remember { mutableStateOf(live) }
+    if (live.phase != Phase.DONE) last.value = live
+    val state = last.value
     LaunchedEffect(Unit) { host.impression() }
-    LaunchedEffect(state.phase) {
-        when (state.phase) {
+    LaunchedEffect(live.phase) {
+        when (live.phase) {
             Phase.THANKS -> {
                 val ms = content.thanks?.autoCloseMs ?: Defaults.THANKS_AUTO_CLOSE_MS
                 if (ms > 0) { delay(ms); host.finish() }

@@ -60,7 +60,12 @@ internal class PendingShow(
     val content: FeedbackContent,
     val callbacks: RenderCallbacks,
     val result: CompletableDeferred<ExperienceResult>,
-)
+) {
+    /** One form state per show, kept across activity recreation (font scale, locale, reclaim). */
+    var host: FormHost? = null
+    /** The current activity's exit animation. */
+    var onClosed: (() -> Unit)? = null
+}
 
 internal object ShowRegistry {
     val pending = ConcurrentHashMap<String, PendingShow>()
@@ -114,10 +119,12 @@ class IntunixFormActivity : ComponentActivity() {
         pending = p
         enableEdgeToEdge()
         val visible = MutableTransitionState(false).apply { targetState = true }
-        val h = FormHost(p.exp, p.content, p.callbacks, { openExternal(this, it) }) { r ->
+        val app = applicationContext
+        val h = p.host ?: FormHost(p.exp, p.content, p.callbacks, { openExternal(app, it) }) { r ->
             p.result.complete(r)
-            visible.targetState = false
-        }
+            p.onClosed?.invoke()
+        }.also { p.host = it }
+        p.onClosed = { visible.targetState = false }
         host = h
         setContent {
             BackHandler { h.close() }

@@ -45,9 +45,12 @@ object Intunix {
     const val VERSION = BuildConfig.SDK_VERSION
 
     @Volatile private var client: IntunixClient? = null
+    /** Calls made before init finishes, replayed in order once the client exists (web queues these too). */
+    private val early = ArrayDeque<(IntunixClient) -> Unit>()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val foreground = MutableStateFlow(false)
     private var started = 0
+    private var pendingRestart = false
     private var resumed: WeakReference<Activity>? = null
 
     @JvmStatic
@@ -74,59 +77,70 @@ object Intunix {
             client = c
             app.registerActivityLifecycleCallbacks(lifecycle)
             c.start()
+            while (early.isNotEmpty()) early.removeFirst()(c)
         }
     }
 
     /** Identify the signed-in user. Call on every login. */
     @JvmStatic
     @JvmOverloads
-    fun identify(userId: String, traits: Map<String, Any?> = emptyMap()) = main { client?.identify(userId, traits) }
+    fun identify(userId: String, traits: Map<String, Any?> = emptyMap()) = withClient { it.identify(userId, traits) }
 
     /** Call on logout: forgets the user, rotates the anonymous id and ends the session. */
     @JvmStatic
-    fun reset() = main { client?.reset() }
+    fun reset() = withClient { it.reset() }
 
     @JvmStatic
     @JvmOverloads
-    fun track(event: String, properties: Map<String, Any?> = emptyMap()) = main { client?.track(event, properties) }
+    fun track(event: String, properties: Map<String, Any?> = emptyMap()) = withClient { it.track(event, properties) }
 
     /** Tell Intunix which screen is showing. Drives "App screen" triggers and screen targeting. */
     @JvmStatic
-    fun screen(name: String) = main { client?.screen(name) }
+    fun screen(name: String) = withClient { it.screen(name) }
 
     /** Merge values into the session context sent with responses; null clears it. */
     @JvmStatic
-    fun setContext(context: Map<String, Any?>?) = main { client?.setContext(context) }
+    fun setContext(context: Map<String, Any?>?) = withClient { it.setContext(context) }
 
     @JvmStatic
-    fun clearContext() = main { client?.setContext(null) }
+    fun clearContext() = withClient { it.setContext(null) }
 
     /** Show a form now (still subject to its cadence and targeting). Accepts the form id or slug. */
     @JvmStatic
     @JvmOverloads
-    fun showForm(idOrSlug: String, context: Map<String, Any?>? = null) = main { client?.showForm(idOrSlug, context) }
+    fun showForm(idOrSlug: String, context: Map<String, Any?>? = null) = withClient { it.showForm(idOrSlug, context) }
 
     /** Make a form's triggers live. */
     @JvmStatic
-    fun register(idOrSlug: String) = main { client?.register(idOrSlug) }
+    fun register(idOrSlug: String) = withClient { it.register(idOrSlug) }
 
     @JvmStatic
-    fun unregister(idOrSlug: String) = main { client?.unregister(idOrSlug) }
+    fun unregister(idOrSlug: String) = withClient { it.unregister(idOrSlug) }
 
     internal fun clientOrNull() = client
 
     private fun main(block: () -> Unit) {
-        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) block()
-        else scope.launch { block() }
+        // The SDK must never crash the host app.
+        val safe = { runCatching(block).onFailure { Log.e(TAG, "Intunix call failed", it) }; Unit }
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) safe()
+        else scope.launch { safe() }
+    }
+
+    private fun withClient(block: (IntunixClient) -> Unit) = main {
+        val c = client
+        if (c != null) block(c) else if (early.size < 100) early.addLast(block)
     }
 
     private const val TAG = "Intunix"
 
     private val lifecycle = object : Application.ActivityLifecycleCallbacks {
         override fun onActivityStarted(a: Activity) {
+            if (pendingRestart) { pendingRestart = false; return }
             if (started++ == 0) { foreground.value = true; client?.onForeground() }
         }
         override fun onActivityStopped(a: Activity) {
+            // Rotation stops and restarts the activity; that is not going to the background.
+            if (a.isChangingConfigurations) { pendingRestart = true; return }
             if (--started <= 0) { started = 0; foreground.value = false; client?.onBackground() }
         }
         override fun onActivityResumed(a: Activity) { if (a !is IntunixFormActivity) resumed = WeakReference(a) }

@@ -76,7 +76,7 @@ private fun ScaleStep(step: Step, answer: Answer?, onChange: OnAnswer) {
     val ces = step.kind == "ces"
     val values = if (ces) (1..(step.scale ?: Defaults.CES_SCALE)).toList() else (0..10).toList()
     val defaults = when (step.kind) { "ces" -> Defaults.CES; "enps" -> Defaults.ENPS; else -> Defaults.NPS }
-    val perRow = if (!ces && !LocalWide.current) 6 else values.size
+    val perRow = (if (!ces && !LocalWide.current) 6 else values.size).coerceAtLeast(1)
     val selected = answer.num()
     Column {
         values.chunked(perRow).forEachIndexed { r, row ->

@@ -71,13 +71,14 @@ internal class IntunixClient(
     private val pendingShowContext = mutableMapOf<String, Map<String, Any?>>()
 
     fun start() {
+        // Registered before anything can mint a session, so the first one is counted too.
+        session.onNewSession {
+            profile.onSessionStart()
+            context.clear()
+            scope.launch { loadExperiences(); rearm() }
+        }
+        scope.launch { offline.replay(::flush) }
         scope.launch {
-            offline.replay(::flush)
-            session.onNewSession {
-                profile.onSessionStart()
-                context.clear()
-                scope.launch { loadExperiences(); rearm() }
-            }
             session.id()
             loadExperiences()
             queue.start()
@@ -93,7 +94,7 @@ internal class IntunixClient(
     fun onForeground() { session.id() }
 
     /** App went to the background: upload buffered events now. */
-    fun onBackground() { scope.launch { queue.drain() } }
+    fun onBackground() { scope.launch { queue.drain(persistFirst = true) } }
 
     // ---- catalog ----------------------------------------------------------
 
@@ -140,14 +141,15 @@ internal class IntunixClient(
         }
     }
 
-    private fun find(idOrSlug: String) = experiences.firstOrNull { it.id == idOrSlug || it.slug == idOrSlug }
-
     private val fetched = mutableMapOf<String, Experience>()
+
+    /** Catalog forms first, then forms fetched on demand by showForm/register. */
+    private fun find(idOrSlug: String) = experiences.firstOrNull { it.id == idOrSlug || it.slug == idOrSlug }
+        ?: fetched.values.firstOrNull { it.id == idOrSlug || it.slug == idOrSlug }
 
     internal suspend fun resolve(idOrSlug: String): Experience? {
         ready.await()
         find(idOrSlug)?.let { return it }
-        fetched.values.firstOrNull { it.id == idOrSlug || it.slug == idOrSlug }?.let { return it }
         return try {
             val res = retry { http.request("GET", "/sdk/forms/${enc(idOrSlug)}") }
             JSONObject(res.body ?: "{}").obj("data")?.obj("experience")?.let(::parseExperience)?.also { fetched[it.id] = it }
@@ -163,7 +165,7 @@ internal class IntunixClient(
         for (exp in experiences) if (exp.autoActivate && registeredIds.add(exp.id)) triggers.register(exp)
     }
 
-    private fun rearm() = registeredIds.forEach { id -> (find(id) ?: fetched[id])?.let(triggers::register) }
+    private fun rearm() = registeredIds.forEach { id -> find(id)?.let(triggers::register) }
 
     fun register(idOrSlug: String) = scope.launch {
         val exp = resolve(idOrSlug) ?: return@launch
@@ -172,7 +174,7 @@ internal class IntunixClient(
     }
 
     fun unregister(idOrSlug: String) {
-        val exp = find(idOrSlug) ?: fetched[idOrSlug] ?: return
+        val exp = find(idOrSlug) ?: return
         registeredIds.remove(exp.id)
         triggers.unregister(exp.id)
     }
@@ -250,7 +252,7 @@ internal class IntunixClient(
     private fun pump() {
         if (showing) return
         val id = showQueue.removeFirstOrNull() ?: return
-        val exp = find(id) ?: fetched[id]
+        val exp = find(id)
         val ctx = mergedContext(id)
         val content = exp?.let { parseFeedbackContent(it.content) }
         if (exp == null || content == null || !isEligible(exp, ctx)) {

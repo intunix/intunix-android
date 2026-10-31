@@ -15,6 +15,13 @@ internal class OfflineStore(private val store: KeyValueStore, private val clock:
         store.set(KEY, JSONArray(all.takeLast(MAX)).toString())
     }
 
+    /** Drop entries that were uploaded after being saved defensively. */
+    fun remove(batch: List<JSONObject>) {
+        val sent = batch.map { it.toString() }.toSet()
+        val left = readAll().filter { it.toString() !in sent }
+        if (left.isEmpty()) store.remove(KEY) else store.set(KEY, JSONArray(left).toString())
+    }
+
     fun readAll(): List<JSONObject> = store.get(KEY)?.let { runCatching { JSONArray(it).objects() }.getOrNull() } ?: emptyList()
 
     suspend fun replay(flush: suspend (List<JSONObject>) -> Unit) {
@@ -58,11 +65,21 @@ internal class EventQueue(
         if (buf.size >= max) scope.launch { drain() }
     }
 
-    /** Upload what is buffered; on failure the batch goes to disk. Called on the timer and when the app backgrounds. */
-    suspend fun drain() {
+    /**
+     * Upload what is buffered; on failure the batch goes to disk. When the app backgrounds
+     * ([persistFirst]) the batch is written to disk before the upload, so a process kill
+     * mid-request (e.g. after a review click opens the browser) does not lose it.
+     */
+    suspend fun drain(persistFirst: Boolean = false) {
         if (buf.isEmpty()) return
         val batch = buf.toList()
         buf.clear()
-        try { flush(batch) } catch (_: Exception) { offline.save(batch) }
+        if (persistFirst) offline.save(batch)
+        try {
+            flush(batch)
+            if (persistFirst) offline.remove(batch)
+        } catch (_: Exception) {
+            if (!persistFirst) offline.save(batch)
+        }
     }
 }
