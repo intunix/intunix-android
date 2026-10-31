@@ -46,13 +46,49 @@ class IntunixFormView @JvmOverloads constructor(context: Context, attrs: Attribu
         setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
         setContent {
             val f = formId
-            Box(Modifier.fillMaxWidth().onSizeChanged { onHeightChanged?.invoke(it.height) }) {
+            Box(Modifier.fillMaxWidth().onSizeChanged { report(it.height) }) {
                 if (f != null) IntunixForm(f, Modifier.fillMaxWidth(), formContext) { onFinished?.invoke() }
             }
         }
     }
 
+    private var reported = -1
+
     init { addView(compose, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)) }
+
+    private fun report(px: Int) {
+        if (px == reported) return
+        reported = px
+        onHeightChanged?.invoke(px)
+    }
+
+    /**
+     * The form is always measured at its natural height, even when the host fixes this view's
+     * height (React Native, Flutter size native views themselves and grow it from the callback).
+     */
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        compose.measure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
+        setMeasuredDimension(
+            resolveSize(compose.measuredWidth, widthMeasureSpec),
+            resolveSize(compose.measuredHeight, heightMeasureSpec),
+        )
+    }
+
+    override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+        compose.layout(0, 0, r - l, compose.measuredHeight)
+    }
+
+    // React Native ignores requestLayout from native children; measure and lay out ourselves.
+    private val relayout = Runnable {
+        measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY))
+        layout(left, top, right, bottom)
+    }
+
+    override fun requestLayout() {
+        super.requestLayout()
+        @Suppress("SENSELESS_COMPARISON") // called from the super constructor, before fields exist
+        if (relayout != null) post(relayout)
+    }
 
     /** Form id or slug to show. */
     fun setForm(form: String?, context: Map<String, Any?>? = null) {

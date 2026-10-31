@@ -25,7 +25,7 @@ Then the dependency:
 
 ```kotlin
 dependencies {
-    implementation("com.github.intunix:intunix-android:1.5.4")
+    implementation("com.github.intunix:intunix-android:1.5.5")
 }
 ```
 
