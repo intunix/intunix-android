@@ -35,6 +35,13 @@ class FormScreenshotTest {
         Box(Modifier.background(Color.White).padding(20.dp)) { FeedbackForm(h) }
     }
 
+    /** Dark mode, framed by the dark card colour as the sheet would draw it. */
+    private fun darkShot(h: FormHost) = paparazzi.snapshot {
+        FormTheme(h.content.brand, com.intunix.sdk.IntunixTheme.Dark) {
+            Box(Modifier.background(LocalPalette.current.card).padding(20.dp)) { FeedbackForm(h) }
+        }
+    }
+
     private fun n(id: String, kind: String, v: Int) = Answer(id, kind, AnswerValue.Num(v))
     private val extra = """,{"id":"z","kind":"nps","title":"Second question"}"""
 
@@ -49,4 +56,10 @@ class FormScreenshotTest {
         {"id":"f","kind":"followup","title":"Anything else?","page":1,"input":{"type":"free","maxLength":500}}$extra""",
         Answer("p", "pmf", AnswerValue.Choice("somewhat")), Answer("o", "followup", AnswerValue.Many(listOf("b", "c")))))
     @Test fun thanks() = shot(host("""{"id":"t","kind":"thumbs","title":"Was this helpful?"}""", Answer("t", "thumbs", AnswerValue.Choice("up"))))
+
+    @Test fun darkScales() = darkShot(host("""{"id":"a","kind":"nps","title":"How likely are you to recommend us?","page":1},{"id":"s","kind":"star","title":"Rate us","page":1},{"id":"m","kind":"smileys","title":"How do you feel?","icons":"mood","page":1}$extra""", n("a", "nps", 9), n("s", "star", 4)))
+    @Test fun darkChoices() = darkShot(host("""{"id":"t","kind":"thumbs","title":"Was this helpful?","icons":"tone","page":1},
+        {"id":"o","kind":"followup","title":"Pick all that apply","page":1,"input":{"type":"selectMultiple","options":[{"value":"a","label":"Pricing"},{"value":"b","label":"Speed"}]}},
+        {"id":"f","kind":"followup","title":"Anything else?","page":1,"input":{"type":"free","maxLength":500}}$extra""",
+        Answer("t", "thumbs", AnswerValue.Choice("up")), Answer("o", "followup", AnswerValue.Many(listOf("b")))))
 }

@@ -6,7 +6,7 @@ plugins {
     id("app.cash.paparazzi")
 }
 
-val sdkVersion = "1.5.6"
+val sdkVersion = "1.6.0"
 
 android {
     namespace = "com.intunix.sdk"

@@ -11,12 +11,16 @@ import com.intunix.sdk.internal.Logger
 import com.intunix.sdk.internal.PrefsStore
 import com.intunix.sdk.ui.ActivityPresenter
 import com.intunix.sdk.ui.IntunixFormActivity
+import com.intunix.sdk.ui.ThemeState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
+
+/** Light or dark forms. [Auto] follows the console lock, else the app screen the form sits on. */
+enum class IntunixTheme { Auto, Light, Dark }
 
 /** Options for [Intunix.init]. Names follow the web SDK's init options. */
 data class IntunixOptions(
@@ -35,6 +39,8 @@ data class IntunixOptions(
     val disableEventApi: Boolean = false,
     /** Log to Logcat under the tag "Intunix". */
     val debug: Boolean = false,
+    /** Dark mode override. Change later with [Intunix.setTheme]; it beats the console lock. */
+    val theme: IntunixTheme = IntunixTheme.Auto,
 )
 
 /**
@@ -59,6 +65,7 @@ object Intunix {
         val app = context.applicationContext as Application
         main {
             if (client != null) return@main
+            if (options.theme != IntunixTheme.Auto) ThemeState.preference = options.theme
             val log = Logger { level, msg ->
                 if (options.debug) when (level) { 'e' -> Log.e(TAG, msg); 'w' -> Log.w(TAG, msg); else -> Log.d(TAG, msg) }
             }
@@ -130,6 +137,10 @@ object Intunix {
     @JvmStatic
     @JvmOverloads
     fun showForm(idOrSlug: String, context: Map<String, Any?>? = null) = withClient { it.showForm(idOrSlug, context) }
+
+    /** Force light or dark forms, or [IntunixTheme.Auto] to follow the console lock and the app. Open forms switch at once. */
+    @JvmStatic
+    fun setTheme(theme: IntunixTheme) = main { ThemeState.preference = theme }
 
     /** Make a form's triggers live. */
     @JvmStatic

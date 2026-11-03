@@ -14,6 +14,7 @@ import com.intunix.sdk.internal.newId
 import com.intunix.sdk.internal.parseFeedbackContent
 import com.intunix.sdk.ui.FeedbackForm
 import com.intunix.sdk.ui.FormHost
+import com.intunix.sdk.ui.FormTheme
 import com.intunix.sdk.ui.openExternal
 
 /**
@@ -29,6 +30,8 @@ fun IntunixForm(
     form: String,
     modifier: Modifier = Modifier,
     context: Map<String, Any?>? = null,
+    /** Light/dark for this form; null = [Intunix.setTheme] / console lock / the app. */
+    theme: IntunixTheme? = null,
     onFinished: (() -> Unit)? = null,
 ) {
     val app = LocalContext.current.applicationContext
@@ -50,7 +53,7 @@ fun IntunixForm(
         }
     }
     val h = holder.host
-    if (h != null && !holder.done) FeedbackForm(h, modifier)
+    if (h != null && !holder.done) FormTheme(h.content.brand, theme) { FeedbackForm(h, modifier) }
 }
 
 internal class FormHolder : ViewModel() {

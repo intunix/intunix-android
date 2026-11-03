@@ -95,16 +95,18 @@ internal fun FaceIcon(set: String, level: Int, ink: Color, modifier: Modifier = 
 /** Thumb in the line / tone / mark set. */
 @Composable
 internal fun ThumbIcon(set: String, up: Boolean, selected: Boolean, brand: Color, modifier: Modifier = Modifier) {
+    val neutral = Crisp.Neutral
+    val muted = Crisp.Muted
     Canvas(modifier) {
         inViewBox(24f) {
             val tone = if (up) IconSets.GREEN else IconSets.RED
             if (set == "mark") {
-                drawCircle(if (selected) tone else Crisp.Neutral, 10f, Offset(12f, 12f))
+                drawCircle(if (selected) tone else neutral, 10f, Offset(12f, 12f))
                 val d = if (up) "M7.5 12.5l3 3 6-6.5" else "M8.5 8.5l7 7M15.5 8.5l-7 7"
                 drawPath(IconSets.path(d), Color.White, style = Stroke(2.4f, cap = StrokeCap.Round, join = StrokeJoin.Round))
                 return@inViewBox
             }
-            val color = if (set == "tone") tone else if (selected) brand else Crisp.Muted
+            val color = if (set == "tone") tone else if (selected) brand else muted
             withTransform({ if (!up) scale(1f, -1f, pivot = Offset(12f, 12f)) }) {
                 val p = IconSets.path(IconSets.THUMB)
                 if (set == "tone" && selected) drawPath(p, if (up) Color(0xFFBBF7D0) else Color(0xFFFECACA))

@@ -37,6 +37,9 @@ class IntunixFormView @JvmOverloads constructor(context: Context, attrs: Attribu
     private var formContext by mutableStateOf<Map<String, Any?>?>(null)
     private var fallback: FallbackOwner? = null
 
+    /** Light/dark for this form; null = [Intunix.setTheme] / console lock / the app. */
+    var theme by mutableStateOf<IntunixTheme?>(null)
+
     /** Called once the visitor submits or closes the form. */
     var onFinished: (() -> Unit)? = null
     /** Content height in pixels whenever it changes (0 once the form is done). */
@@ -47,7 +50,7 @@ class IntunixFormView @JvmOverloads constructor(context: Context, attrs: Attribu
         setContent {
             val f = formId
             Box(Modifier.fillMaxWidth().onSizeChanged { report(it.height) }) {
-                if (f != null) IntunixForm(f, Modifier.fillMaxWidth(), formContext) { onFinished?.invoke() }
+                if (f != null) IntunixForm(f, Modifier.fillMaxWidth(), formContext, theme) { onFinished?.invoke() }
             }
         }
     }

@@ -25,7 +25,7 @@ Then the dependency:
 
 ```kotlin
 dependencies {
-    implementation("com.github.intunix:intunix-android:1.5.6")
+    implementation("com.github.intunix:intunix-android:1.6.0")
 }
 ```
 
@@ -96,6 +96,23 @@ container.addView(form)
 
 Only one form shows at a time; others wait their turn. A form waits for the app to be in the
 foreground.
+
+### Dark mode
+
+Forms follow your app with no extra code. A form is dark when the screen it opens
+over uses a dark theme, or when the app is in night mode (including an AppCompat
+`setDefaultNightMode` override). In the console, each form can be locked to light or
+dark, and its dark background colour can be set. Override from code (code wins over
+the console):
+
+```kotlin
+Intunix.init(this, "int_sk_xxx", IntunixOptions(theme = IntunixTheme.Auto))
+Intunix.setTheme(IntunixTheme.Dark)   // any time; open forms switch at once
+IntunixForm("nps-q3", theme = IntunixTheme.Light)
+```
+
+If your app has only a light theme but still runs in night mode, pass
+`IntunixTheme.Light`.
 
 ### Triggers
 
