@@ -3,7 +3,14 @@ package com.intunix.sdk.internal
 import org.json.JSONArray
 import org.json.JSONObject
 
-internal data class Brand(val color: String, val logoUrl: String?)
+internal data class Brand(
+    val color: String,
+    val logoUrl: String?,
+    /** Console lock: "light", "dark", or null (follow the app). */
+    val darkMode: String? = null,
+    /** #rrggbb card colour in dark mode; null or invalid = default. */
+    val darkBackground: String? = null,
+)
 internal data class ChoiceOption(val value: String, val label: String, val emoji: String?)
 internal data class FollowUpInput(
     val type: String,
@@ -107,7 +114,10 @@ internal fun parseFeedbackContent(o: JSONObject): FeedbackContent? {
     val thanks = o.obj("thanks")?.let { ThanksConfig(it.bool("enabled"), it.str("title"), it.str("subtitle"), it.long("autoCloseMs")) }
     return FeedbackContent(
         steps = o.arr("steps")?.objects()?.mapNotNull(::parseStep) ?: emptyList(),
-        brand = Brand(brand?.str("color") ?: "#2F9461", brand?.str("logoUrl")),
+        brand = Brand(
+            brand?.str("color") ?: "#2F9461", brand?.str("logoUrl"),
+            brand?.obj("dark")?.str("mode"), brand?.obj("dark")?.str("background"),
+        ),
         thanks = thanks,
         submitLabel = o.str("submitLabel"), nextLabel = o.str("nextLabel"), backLabel = o.str("backLabel"),
         closable = o.bool("closable") != false,

@@ -151,7 +151,7 @@ internal fun FeedbackForm(host: FormHost, modifier: Modifier = Modifier) {
     }
     if (state.phase == Phase.DONE) return
 
-    CompositionLocalProvider(LocalBrand provides brandColors(content.brand.color)) {
+    CompositionLocalProvider(LocalBrand provides brandColors(content.brand.color, LocalPalette.current)) {
         BoxWithConstraints(modifier.fillMaxWidth()) {
             CompositionLocalProvider(LocalWide provides (maxWidth >= Crisp.WideAt)) {
                 val ending = state.phase == Phase.THANKS || state.phase == Phase.REVIEW

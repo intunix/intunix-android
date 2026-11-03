@@ -10,6 +10,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -36,17 +37,81 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.pow
 
-/** Colours and sizes from FEEDBACK_CSS in @intunix/core (the Crisp style). */
+/** Neutral colours of one theme. Light values are FEEDBACK_CSS's; dark ones come from [darkPalette]. */
+internal data class Palette(
+    val text: Color, val muted: Color, val border: Color, val scaleText: Color, val track: Color,
+    val markBorder: Color, val neutral: Color, val error: Color, val card: Color, val surface: Color,
+    val posBg: Color, val negBg: Color, val posFg: Color, val negFg: Color, val dark: Boolean,
+)
+
+internal val LightPalette = Palette(
+    text = Color(0xFF18181B), muted = Color(0xFF71717A), border = Color(0xFFE4E4E7), scaleText = Color(0xFF3F3F46),
+    track = Color(0xFFECECEE), markBorder = Color(0xFFD4D4D8), neutral = Color(0xFFA1A1AA), error = Color(0xFFDC2626),
+    card = Color.White, surface = Color(0xFFF4F4F5), posBg = Color(0xFFF0FDF4), negBg = Color(0xFFFEF2F2),
+    posFg = Color(0xFF15803D), negFg = Color(0xFFB91C1C), dark = false,
+)
+
+const val DEFAULT_DARK_BACKGROUND = "#18181b"
+
+/** Port of darkPalette in @intunix/core: neutrals stepped from the background toward the text colour. */
+internal fun darkPalette(background: String?): Palette {
+    val bg = background?.takeIf { Regex("^#[0-9a-fA-F]{6}$").matches(it) }?.let(::parseHexColor) ?: parseHexColor(DEFAULT_DARK_BACKGROUND)!!
+    val lightBg = !whiteReads(bg)
+    val ink = if (lightBg) Color.Black else Color.White
+    fun step(t: Float) = mix(bg, ink, t)
+    return Palette(
+        text = if (lightBg) Color(0xFF18181B) else Color(0xFFFAFAFA),
+        muted = step(0.62f), border = step(0.16f), scaleText = step(0.82f), track = step(0.13f),
+        markBorder = step(0.28f), neutral = step(0.45f),
+        error = if (lightBg) Color(0xFFB91C1C) else Color(0xFFF87171),
+        card = bg, surface = step(0.07f),
+        posBg = Color(0x2E16A34A), negBg = Color(0x2EDC2626),
+        posFg = if (lightBg) Color(0xFF15803D) else Color(0xFF4ADE80),
+        negFg = if (lightBg) Color(0xFFB91C1C) else Color(0xFFF87171),
+        dark = true,
+    )
+}
+
+/** Brand as-is unless it would vanish on the card (< 3:1); then nudged toward the text colour. */
+internal fun accentFor(brand: Color, card: Color): Color {
+    if (contrast(brand, card) >= 3f) return brand
+    val ink = if (whiteReads(card)) Color.White else Color.Black
+    var t = 0.1f
+    while (t < 1f) { val c = mix(brand, ink, t); if (contrast(c, card) >= 3f) return c; t += 0.1f }
+    return ink
+}
+
+internal fun luminance(c: Color): Float {
+    fun ch(x: Float) = if (x <= 0.03928f) x / 12.92f else ((x + 0.055f) / 1.055f).toDouble().pow(2.4).toFloat()
+    return 0.2126f * ch(c.red) + 0.7152f * ch(c.green) + 0.0722f * ch(c.blue)
+}
+
+internal fun contrast(a: Color, b: Color): Float {
+    val la = luminance(a); val lb = luminance(b)
+    return (maxOf(la, lb) + 0.05f) / (minOf(la, lb) + 0.05f)
+}
+
+private fun whiteReads(c: Color) = (1 + 0.05f) / (luminance(c) + 0.05f) >= 4.5f
+
+private fun mix(a: Color, b: Color, t: Float): Color {
+    fun ch(x: Float, y: Float) = (Math.round((x + (y - x) * t) * 255f) / 255f)
+    return Color(ch(a.red, b.red), ch(a.green, b.green), ch(a.blue, b.blue))
+}
+
+internal val LocalPalette = staticCompositionLocalOf { LightPalette }
+
+/** Colours and sizes from FEEDBACK_CSS in @intunix/core (the Crisp style), for the current theme. */
 internal object Crisp {
-    val Text = Color(0xFF18181B)
-    val Muted = Color(0xFF71717A)
-    val Border = Color(0xFFE4E4E7)
-    val ScaleText = Color(0xFF3F3F46)
-    val Track = Color(0xFFECECEE)
-    val MarkBorder = Color(0xFFD4D4D8)
-    val Neutral = Color(0xFFA1A1AA)
-    val Error = Color(0xFFDC2626)
-    val Card = Color.White
+    val Text: Color @Composable @ReadOnlyComposable get() = LocalPalette.current.text
+    val Muted: Color @Composable @ReadOnlyComposable get() = LocalPalette.current.muted
+    val Border: Color @Composable @ReadOnlyComposable get() = LocalPalette.current.border
+    val ScaleText: Color @Composable @ReadOnlyComposable get() = LocalPalette.current.scaleText
+    val Track: Color @Composable @ReadOnlyComposable get() = LocalPalette.current.track
+    val MarkBorder: Color @Composable @ReadOnlyComposable get() = LocalPalette.current.markBorder
+    val Neutral: Color @Composable @ReadOnlyComposable get() = LocalPalette.current.neutral
+    val Error: Color @Composable @ReadOnlyComposable get() = LocalPalette.current.error
+    val Card: Color @Composable @ReadOnlyComposable get() = LocalPalette.current.card
+    val Surface: Color @Composable @ReadOnlyComposable get() = LocalPalette.current.surface
     val Backdrop = Color(0x8009090B)
     /** Form width at which layouts switch to their wide form (the web container query). */
     val WideAt = 440.dp
@@ -62,23 +127,24 @@ internal fun parseHexColor(hex: String?): Color? {
     return Color(0xFF000000 or n)
 }
 
-internal fun brandColors(hex: String?): BrandColors {
-    val c = parseHexColor(hex) ?: Color(0xFF2F9461)
-    fun ch(x: Float) = if (x <= 0.03928f) x / 12.92f else ((x + 0.055f) / 1.055f).toDouble().pow(2.4).toFloat()
-    val lum = 0.2126f * ch(c.red) + 0.7152f * ch(c.green) + 0.0722f * ch(c.blue)
-    val on = if ((1 + 0.05f) / (lum + 0.05f) >= 4.5f) Color.White else Color(0xFF111111)
+internal fun brandColors(hex: String?, palette: Palette = LightPalette): BrandColors {
+    val base = parseHexColor(hex) ?: Color(0xFF2F9461)
+    val c = if (palette.dark) accentFor(base, palette.card) else base
+    val on = if (whiteReads(c)) Color.White else Color(0xFF111111)
     return BrandColors(c, c.copy(alpha = 0.1f), c.copy(alpha = 0.3f), on)
 }
 
 internal val LocalBrand = staticCompositionLocalOf { brandColors(null) }
 internal val LocalWide = compositionLocalOf { false }
 
+@Composable
+@ReadOnlyComposable
 internal fun text(size: TextUnit, weight: FontWeight = FontWeight.Normal, color: Color = Crisp.Text, lineHeight: TextUnit = TextUnit.Unspecified) =
     TextStyle(fontSize = size, fontWeight = weight, color = color, lineHeight = lineHeight)
 
-internal val TitleStyle = text(18.sp, FontWeight.SemiBold, lineHeight = 24.sp)
-internal val SubStyle = text(14.sp, color = Crisp.Muted, lineHeight = 21.sp)
-internal val LegendStyle = text(12.sp, FontWeight.Medium, Crisp.Muted)
+internal val TitleStyle: TextStyle @Composable @ReadOnlyComposable get() = text(18.sp, FontWeight.SemiBold, lineHeight = 24.sp)
+internal val SubStyle: TextStyle @Composable @ReadOnlyComposable get() = text(14.sp, color = Crisp.Muted, lineHeight = 21.sp)
+internal val LegendStyle: TextStyle @Composable @ReadOnlyComposable get() = text(12.sp, FontWeight.Medium, Crisp.Muted)
 
 /** Answer controls: no ripple, a short press-in on touch (scale .94), radio semantics. */
 @Composable

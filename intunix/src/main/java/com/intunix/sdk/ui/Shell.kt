@@ -65,6 +65,8 @@ internal class PendingShow(
     var host: FormHost? = null
     /** The current activity's exit animation. */
     var onClosed: (() -> Unit)? = null
+    /** The app screen the form opened over; its theme decides light/dark in Auto. */
+    var from: java.lang.ref.WeakReference<Activity>? = null
 }
 
 internal object ShowRegistry {
@@ -91,9 +93,11 @@ internal class ActivityPresenter(
         foreground.first { it }
         val token = newId()
         val result = CompletableDeferred<ExperienceResult>()
-        ShowRegistry.pending[token] = PendingShow(exp, content, callbacks, result)
+        val pending = PendingShow(exp, content, callbacks, result)
+        ShowRegistry.pending[token] = pending
         try {
             val from = currentActivity()
+            pending.from = from?.let { java.lang.ref.WeakReference(it) }
             val intent = Intent(from ?: app, IntunixFormActivity::class.java).putExtra(EXTRA_TOKEN, token)
             if (from == null) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             (from ?: app).startActivity(intent)
@@ -131,7 +135,7 @@ class IntunixFormActivity : ComponentActivity() {
             LaunchedEffect(visible.currentState, visible.targetState) {
                 if (!visible.targetState && !visible.currentState) finishQuietly()
             }
-            FormFrame(p.exp.type == "modal", visible, h)
+            FormTheme(p.content.brand, hostContext = p.from?.get()) { FormFrame(p.exp.type == "modal", visible, h) }
         }
     }
 

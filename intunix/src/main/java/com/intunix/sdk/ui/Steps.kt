@@ -197,8 +197,9 @@ private fun ThumbsStep(step: Step, answer: Answer?, onChange: OnAnswer) {
                 val up = value == "up"
                 val accent = if (toned) (if (up) IconSets.GREEN else IconSets.RED) else brand.color
                 val tint = if (toned) accent.copy(alpha = 0.15f) else brand.soft
-                val bg = if (on && toned) (if (up) Color(0xFFF0FDF4) else Color(0xFFFEF2F2)) else Crisp.Card
-                val labelColor = if (!on) Crisp.Muted else if (toned) (if (up) Color(0xFF15803D) else Color(0xFFB91C1C)) else brand.color
+                val palette = LocalPalette.current
+                val bg = if (on && toned) (if (up) palette.posBg else palette.negBg) else Crisp.Card
+                val labelColor = if (!on) Crisp.Muted else if (toned) (if (up) palette.posFg else palette.negFg) else brand.color
                 val pop = popScale(on)
                 Column(
                     Modifier.weight(1f).height(84.dp)
