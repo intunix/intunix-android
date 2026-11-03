@@ -41,10 +41,10 @@ internal fun isHostDark(ctx: Context): Boolean {
 
 /** Provides the light or dark palette for a form. [hostContext] is the app screen the form sits on. */
 @Composable
-internal fun FormTheme(brand: Brand, theme: IntunixTheme? = null, hostContext: Context? = null, body: @Composable () -> Unit) {
+internal fun FormTheme(brand: Brand, theme: IntunixTheme? = null, hostContext: Context? = null, hostDarkOverride: Boolean? = null, body: @Composable () -> Unit) {
     val ctx = hostContext ?: LocalContext.current
     val uiMode = LocalConfiguration.current.uiMode
-    val hostDark = remember(ctx, uiMode) { isHostDark(ctx) }
+    val hostDark = hostDarkOverride ?: remember(ctx, uiMode) { isHostDark(ctx) }
     val dark = resolveDark(theme ?: ThemeState.preference, brand.darkMode, hostDark)
     val palette = remember(dark, brand.darkBackground) { if (dark) darkPalette(brand.darkBackground) else LightPalette }
     CompositionLocalProvider(LocalPalette provides palette) { body() }

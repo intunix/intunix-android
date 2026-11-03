@@ -40,6 +40,12 @@ class IntunixFormView @JvmOverloads constructor(context: Context, attrs: Attribu
     /** Light/dark for this form; null = [Intunix.setTheme] / console lock / the app. */
     var theme by mutableStateOf<IntunixTheme?>(null)
 
+    /**
+     * Whether the screen around the form is dark, for hosts that draw their own theme
+     * (Flutter). Used only in Auto, after the console lock. Null = read it from the app.
+     */
+    var hostDark by mutableStateOf<Boolean?>(null)
+
     /** Called once the visitor submits or closes the form. */
     var onFinished: (() -> Unit)? = null
     /** Content height in pixels whenever it changes (0 once the form is done). */
@@ -50,7 +56,9 @@ class IntunixFormView @JvmOverloads constructor(context: Context, attrs: Attribu
         setContent {
             val f = formId
             Box(Modifier.fillMaxWidth().onSizeChanged { report(it.height) }) {
-                if (f != null) IntunixForm(f, Modifier.fillMaxWidth(), formContext, theme) { onFinished?.invoke() }
+                if (f != null) androidx.compose.runtime.CompositionLocalProvider(LocalHostDark provides hostDark) {
+                    IntunixForm(f, Modifier.fillMaxWidth(), formContext, theme) { onFinished?.invoke() }
+                }
             }
         }
     }

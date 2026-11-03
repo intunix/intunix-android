@@ -53,8 +53,11 @@ fun IntunixForm(
         }
     }
     val h = holder.host
-    if (h != null && !holder.done) FormTheme(h.content.brand, theme) { FeedbackForm(h, modifier) }
+    if (h != null && !holder.done) FormTheme(h.content.brand, theme, hostDarkOverride = LocalHostDark.current) { FeedbackForm(h, modifier) }
 }
+
+/** Wrappers whose UI theme the SDK cannot see (Flutter) say whether the screen is dark. */
+internal val LocalHostDark = androidx.compose.runtime.compositionLocalOf<Boolean?> { null }
 
 internal class FormHolder : ViewModel() {
     var host by mutableStateOf<FormHost?>(null)
