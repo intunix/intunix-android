@@ -23,6 +23,14 @@ internal class PrefsStore(context: Context) : KeyValueStore {
     override fun remove(key: String) = prefs.edit().remove(key).apply()
 }
 
+/** The language a respondent picked in a multi-language form, remembered across forms. */
+internal class LanguageStore(private val store: KeyValueStore) {
+    fun remembered(): String? = store.get(KEY)
+    fun remember(code: String) = store.set(KEY, code)
+    fun clear() = store.remove(KEY)
+    private companion object { const val KEY = "intunix:lang" }
+}
+
 internal fun newId(): String = java.util.UUID.randomUUID().toString()
 
 internal class AnonId(private val store: KeyValueStore) {

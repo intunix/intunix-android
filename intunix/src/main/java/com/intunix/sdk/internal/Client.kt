@@ -12,6 +12,7 @@ internal data class RenderCallbacks(
     val onDismiss: () -> Unit,
     val clientResponseId: String,
     val onReviewEvent: (ReviewEvent) -> Unit,
+    val locale: LocaleSource? = null,
 )
 
 internal data class ExperienceResult(val outcome: String, val response: FeedbackResponse?)
@@ -31,6 +32,7 @@ internal data class ClientConfig(
     val screenTriggerDelayMs: Long,
     val disableEventApi: Boolean,
     val sdkVersion: String,
+    val locale: String? = null,
 )
 
 internal fun interface Logger { fun log(level: Char, msg: String) }
@@ -53,6 +55,9 @@ internal class IntunixClient(
     private val session = SessionManager(store, clock)
     private val profile = ProfileStore(store, clock)
     private val shown = ShownStore(store)
+    private val languages = LanguageStore(store)
+    private var locale = cfg.locale
+    private val initLocale = cfg.locale
     private val offline = OfflineStore(store, clock)
     private val queue = EventQueue(scope, cfg.flushIntervalMs, cfg.maxQueueSize, offline, ::flush)
     private val triggers = TriggerEvaluator(scope, cfg.screenTriggerDelayMs) { enqueueShow(it.id) }
@@ -197,7 +202,14 @@ internal class IntunixClient(
         anon.reset()
         session.reset()
         context.clear()
+        languages.clear()
+        locale = initLocale
     }
+
+    /** The app's language changed: later forms use [code], replacing the respondent's remembered choice. */
+    fun setLocale(code: String) { locale = code; languages.remember(code) }
+
+    internal fun localeSource(perForm: String? = null) = LocaleSource({ perForm ?: locale }, languages::remembered, languages::remember)
 
     fun setContext(patch: Map<String, Any?>?) { if (patch == null) context.clear() else context.putAll(patch) }
 
@@ -279,7 +291,7 @@ internal class IntunixClient(
         }
     }
 
-    internal fun callbacks(exp: Experience, ctx: Map<String, Any?>, responseId: String) = RenderCallbacks(
+    internal fun callbacks(exp: Experience, ctx: Map<String, Any?>, responseId: String, formLocale: String? = null) = RenderCallbacks(
         onImpression = {
             track("\$experience_impression", mapOf("id" to exp.id))
             if (batchShown) track("\$form_shown", mapOf("form_id" to exp.id, "context" to ctx)) else reportShown(exp.id)
@@ -297,6 +309,7 @@ internal class IntunixClient(
                 e.triggerThreshold?.let { put("trigger_threshold", it) }
             })
         },
+        locale = localeSource(formLocale),
     )
 
     /** Record the show for cadence and upload the answers. Also used by the inline IntunixForm. */
@@ -319,6 +332,8 @@ internal class IntunixClient(
             .put("context", toJson(ctx))
             .put("anonymous_id", anon.get())
             .put("client_response_id", responseId)
+            .putOpt("language", fb.language)
+            .putOpt("conversation_id", fb.conversationId)
         scope.launch {
             try {
                 retry { http.request("POST", "/sdk/forms/${enc(exp.id)}/response", body.toString()) }

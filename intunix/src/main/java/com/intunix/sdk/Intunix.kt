@@ -41,6 +41,8 @@ data class IntunixOptions(
     val debug: Boolean = false,
     /** Dark mode override. Change later with [Intunix.setTheme]; it beats the console lock. */
     val theme: IntunixTheme = IntunixTheme.Auto,
+    /** Developer default language (BCP-47). Loses to the respondent's own earlier choice. */
+    val locale: String? = null,
 )
 
 /**
@@ -79,6 +81,7 @@ object Intunix {
                 screenTriggerDelayMs = options.screenTriggerDelayMs,
                 disableEventApi = options.disableEventApi,
                 sdkVersion = VERSION,
+                locale = options.locale,
             )
             val c = IntunixClient(cfg, PrefsStore(app), ActivityPresenter(app, foreground) { resumed?.get() }, scope, log)
             client = c
@@ -125,6 +128,10 @@ object Intunix {
     /** Tell Intunix which screen is showing. Drives "App screen" triggers and screen targeting. */
     @JvmStatic
     fun screen(name: String) = withClient { it.screen(name) }
+
+    /** The app's language changed: forms shown from now on use [code], and it replaces the respondent's remembered choice. */
+    @JvmStatic
+    fun setLocale(code: String) = withClient { it.setLocale(code) }
 
     /** Merge values into the session context sent with responses; null clears it. */
     @JvmStatic

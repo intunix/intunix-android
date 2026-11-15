@@ -40,9 +40,15 @@ internal data class Step(
     val pmfOptions: List<ChoiceOption>? = null,
     val input: FollowUpInput? = null,
     val icons: String? = null,
+    /** Asks the conversation service for follow-up questions after this step. */
+    val aiFollowUp: Boolean = false,
 )
 
 internal data class ThanksConfig(val enabled: Boolean?, val title: String?, val subtitle: String?, val autoCloseMs: Long?)
+
+internal data class ChatTexts(
+    val sendLabel: String?, val skipLabel: String?, val endLabel: String?, val typingLabel: String?, val logLabel: String?,
+)
 
 internal data class FeedbackContent(
     val steps: List<Step>,
@@ -52,6 +58,7 @@ internal data class FeedbackContent(
     val nextLabel: String? = null,
     val backLabel: String? = null,
     val closable: Boolean = true,
+    val chat: ChatTexts? = null,
 )
 
 internal object Defaults {
@@ -74,6 +81,12 @@ internal object Defaults {
     const val SUBMIT = "Submit"
     const val NEXT = "Next"
     const val BACK = "Back"
+    const val CHAT_SEND = "Send"
+    const val CHAT_SKIP = "Skip"
+    const val CHAT_END = "End conversation"
+    const val CHAT_TYPING = "{name} is typing"
+    const val CHAT_LOG = "Conversation with {name}"
+    const val ANSWER = "Type your answer…"
 }
 
 private val KINDS = setOf("nps", "enps", "star", "csat", "ces", "smileys", "thumbs", "pmf", "followup")
@@ -104,7 +117,7 @@ internal fun parseStep(o: JSONObject): Step? {
         low = (labels as? JSONObject)?.str("low"), high = (labels as? JSONObject)?.str("high"),
         csatLabels = (labels as? JSONArray)?.strings()?.takeIf { it.size == 5 },
         faces = o.arr("faces")?.strings(), pmfOptions = parseOptions(o.arr("options")),
-        input = input, icons = o.str("icons"),
+        input = input, icons = o.str("icons"), aiFollowUp = o.bool("aiFollowUp") == true,
     )
 }
 
@@ -121,6 +134,7 @@ internal fun parseFeedbackContent(o: JSONObject): FeedbackContent? {
         thanks = thanks,
         submitLabel = o.str("submitLabel"), nextLabel = o.str("nextLabel"), backLabel = o.str("backLabel"),
         closable = o.bool("closable") != false,
+        chat = o.obj("chat")?.let { ChatTexts(it.str("sendLabel"), it.str("skipLabel"), it.str("endLabel"), it.str("typingLabel"), it.str("logLabel")) },
     )
 }
 
@@ -148,4 +162,4 @@ internal fun AnswerValue.toWire(): Any = when (this) {
 
 internal fun Answer.toWire(): JSONObject = JSONObject().put("stepId", stepId).put("kind", kind).put("value", value.toWire())
 
-internal data class FeedbackResponse(val answers: List<Answer>, val completed: Boolean, val durationMs: Long)
+internal data class FeedbackResponse(val answers: List<Answer>, val completed: Boolean, val durationMs: Long, val conversationId: String? = null, val language: String? = null)

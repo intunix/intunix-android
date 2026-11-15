@@ -1,0 +1,1961 @@
+[
+  {
+    "name": "single-language form is unchanged",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "Rate us"
+        }
+      ],
+      "nextLabel": "Go"
+    },
+    "lang": "bn",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "Rate us"
+        }
+      ],
+      "nextLabel": "Go"
+    }
+  },
+  {
+    "name": "default language requested returns the form as is",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "defaultLanguage": "en",
+      "languages": [
+        "en",
+        "bn"
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "Rate us"
+        }
+      ],
+      "translations": {
+        "bn": {
+          "steps": {
+            "s1": {
+              "title": "বিএন"
+            }
+          }
+        }
+      }
+    },
+    "lang": "en",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "defaultLanguage": "en",
+      "languages": [
+        "en",
+        "bn"
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "Rate us"
+        }
+      ],
+      "translations": {
+        "bn": {
+          "steps": {
+            "s1": {
+              "title": "বিএন"
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "full translation",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "defaultLanguage": "en",
+      "languages": [
+        "en",
+        "bn"
+      ],
+      "header": {
+        "title": "H",
+        "subtitle": "HS",
+        "logoUrl": "https://x/logo.png"
+      },
+      "thanks": {
+        "enabled": true,
+        "title": "Thanks",
+        "subtitle": "Bye",
+        "autoCloseMs": 1000
+      },
+      "submitLabel": "Submit",
+      "nextLabel": "Next",
+      "backLabel": "Back",
+      "chat": {
+        "sendLabel": "Send",
+        "skipLabel": "Skip",
+        "endLabel": "End",
+        "typingLabel": "Typing",
+        "logLabel": "Log"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "T1",
+          "subtitle": "S1",
+          "labels": {
+            "low": "Low",
+            "high": "High"
+          }
+        },
+        {
+          "id": "s2",
+          "kind": "csat",
+          "title": "T2",
+          "labels": [
+            "a",
+            "b",
+            "c",
+            "d",
+            "e"
+          ]
+        },
+        {
+          "id": "s3",
+          "kind": "pmf",
+          "title": "T3",
+          "options": [
+            {
+              "value": "very",
+              "label": "Very",
+              "emoji": "E1"
+            },
+            {
+              "value": "not",
+              "label": "Not"
+            }
+          ]
+        },
+        {
+          "id": "s4",
+          "kind": "followup",
+          "title": "T4",
+          "input": {
+            "type": "free",
+            "placeholder": "Type",
+            "maxLength": 50
+          }
+        },
+        {
+          "id": "s5",
+          "kind": "followup",
+          "title": "T5",
+          "input": {
+            "type": "selectOne",
+            "options": [
+              {
+                "value": "x",
+                "label": "X",
+                "emoji": "E2"
+              },
+              {
+                "value": "y",
+                "label": "Y"
+              }
+            ]
+          }
+        },
+        {
+          "id": "s6",
+          "kind": "followup",
+          "title": "T6",
+          "input": {
+            "type": "selectMultiple",
+            "options": [
+              {
+                "value": "x",
+                "label": "X"
+              }
+            ],
+            "minPick": 1
+          }
+        },
+        {
+          "id": "s7",
+          "kind": "enps",
+          "title": "T7",
+          "labels": {
+            "low": "l",
+            "high": "h"
+          }
+        },
+        {
+          "id": "s8",
+          "kind": "ces",
+          "title": "T8",
+          "labels": {
+            "low": "l",
+            "high": "h"
+          },
+          "scale": 5
+        }
+      ],
+      "translations": {
+        "bn": {
+          "header": {
+            "title": "bH",
+            "subtitle": "bHS"
+          },
+          "thanks": {
+            "title": "bThanks",
+            "subtitle": "bBye"
+          },
+          "submitLabel": "bSubmit",
+          "nextLabel": "bNext",
+          "backLabel": "bBack",
+          "chat": {
+            "sendLabel": "bSend",
+            "skipLabel": "bSkip",
+            "endLabel": "bEnd",
+            "typingLabel": "bTyping",
+            "logLabel": "bLog"
+          },
+          "sources": {
+            "steps.s1.title": "abc"
+          },
+          "steps": {
+            "s1": {
+              "title": "bT1",
+              "subtitle": "bS1",
+              "labels": {
+                "low": "bLow",
+                "high": "bHigh"
+              }
+            },
+            "s2": {
+              "title": "bT2",
+              "labels": [
+                "ba",
+                "bb",
+                "bc",
+                "bd",
+                "be"
+              ]
+            },
+            "s3": {
+              "title": "bT3",
+              "options": {
+                "very": "bVery",
+                "not": "bNot"
+              }
+            },
+            "s4": {
+              "title": "bT4",
+              "placeholder": "bType"
+            },
+            "s5": {
+              "title": "bT5",
+              "options": {
+                "x": "bX",
+                "y": "bY"
+              }
+            },
+            "s6": {
+              "title": "bT6",
+              "options": {
+                "x": "bX"
+              }
+            },
+            "s7": {
+              "title": "bT7",
+              "labels": {
+                "low": "bl",
+                "high": "bh"
+              }
+            },
+            "s8": {
+              "title": "bT8",
+              "labels": {
+                "low": "bl",
+                "high": "bh"
+              }
+            }
+          }
+        }
+      }
+    },
+    "lang": "bn",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "header": {
+        "title": "bH",
+        "subtitle": "bHS",
+        "logoUrl": "https://x/logo.png"
+      },
+      "thanks": {
+        "enabled": true,
+        "title": "bThanks",
+        "subtitle": "bBye",
+        "autoCloseMs": 1000
+      },
+      "submitLabel": "bSubmit",
+      "nextLabel": "bNext",
+      "backLabel": "bBack",
+      "chat": {
+        "sendLabel": "bSend",
+        "skipLabel": "bSkip",
+        "endLabel": "bEnd",
+        "typingLabel": "bTyping",
+        "logLabel": "bLog"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "bT1",
+          "subtitle": "bS1",
+          "labels": {
+            "low": "bLow",
+            "high": "bHigh"
+          }
+        },
+        {
+          "id": "s2",
+          "kind": "csat",
+          "title": "bT2",
+          "labels": [
+            "ba",
+            "bb",
+            "bc",
+            "bd",
+            "be"
+          ]
+        },
+        {
+          "id": "s3",
+          "kind": "pmf",
+          "title": "bT3",
+          "options": [
+            {
+              "value": "very",
+              "label": "bVery",
+              "emoji": "E1"
+            },
+            {
+              "value": "not",
+              "label": "bNot"
+            }
+          ]
+        },
+        {
+          "id": "s4",
+          "kind": "followup",
+          "title": "bT4",
+          "input": {
+            "type": "free",
+            "placeholder": "bType",
+            "maxLength": 50
+          }
+        },
+        {
+          "id": "s5",
+          "kind": "followup",
+          "title": "bT5",
+          "input": {
+            "type": "selectOne",
+            "options": [
+              {
+                "value": "x",
+                "label": "bX",
+                "emoji": "E2"
+              },
+              {
+                "value": "y",
+                "label": "bY"
+              }
+            ]
+          }
+        },
+        {
+          "id": "s6",
+          "kind": "followup",
+          "title": "bT6",
+          "input": {
+            "type": "selectMultiple",
+            "options": [
+              {
+                "value": "x",
+                "label": "bX"
+              }
+            ],
+            "minPick": 1
+          }
+        },
+        {
+          "id": "s7",
+          "kind": "enps",
+          "title": "bT7",
+          "labels": {
+            "low": "bl",
+            "high": "bh"
+          }
+        },
+        {
+          "id": "s8",
+          "kind": "ces",
+          "title": "bT8",
+          "labels": {
+            "low": "bl",
+            "high": "bh"
+          },
+          "scale": 5
+        }
+      ]
+    }
+  },
+  {
+    "name": "partial translation falls back per field",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "defaultLanguage": "en",
+      "languages": [
+        "en",
+        "bn"
+      ],
+      "nextLabel": "Next",
+      "backLabel": "Back",
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "T1",
+          "subtitle": "S1",
+          "labels": {
+            "low": "Low",
+            "high": "High"
+          }
+        },
+        {
+          "id": "s2",
+          "kind": "nps",
+          "title": "T2"
+        }
+      ],
+      "translations": {
+        "bn": {
+          "nextLabel": "bNext",
+          "steps": {
+            "s1": {
+              "title": "bT1",
+              "labels": {
+                "high": "bHigh"
+              }
+            }
+          }
+        }
+      }
+    },
+    "lang": "bn",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "nextLabel": "bNext",
+      "backLabel": "Back",
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "bT1",
+          "subtitle": "S1",
+          "labels": {
+            "low": "Low",
+            "high": "bHigh"
+          }
+        },
+        {
+          "id": "s2",
+          "kind": "nps",
+          "title": "T2",
+          "labels": {
+            "low": "সম্ভাবনা কম",
+            "high": "খুবই সম্ভাবনা"
+          }
+        }
+      ],
+      "submitLabel": "জমা দিন",
+      "thanks": {
+        "title": "প্রতিক্রিয়া দেওয়ার জন্য ধন্যবাদ!",
+        "subtitle": "আমরা প্রতিটি উত্তর পড়ি — সত্যিই।"
+      },
+      "chat": {
+        "sendLabel": "পাঠান",
+        "skipLabel": "এড়িয়ে যান",
+        "endLabel": "কথোপকথন শেষ করুন",
+        "typingLabel": "{name} লিখছে",
+        "logLabel": "{name}-এর সাথে কথোপকথন"
+      }
+    }
+  },
+  {
+    "name": "option labels map by value; dead option and dead step keys are ignored",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "defaultLanguage": "en",
+      "languages": [
+        "en",
+        "bn"
+      ],
+      "submitLabel": "S",
+      "nextLabel": "N",
+      "backLabel": "B",
+      "thanks": {
+        "title": "T",
+        "subtitle": "U"
+      },
+      "chat": {
+        "sendLabel": "a",
+        "skipLabel": "b",
+        "endLabel": "c",
+        "typingLabel": "d",
+        "logLabel": "e"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "followup",
+          "title": "T1",
+          "input": {
+            "type": "selectOne",
+            "options": [
+              {
+                "value": "b",
+                "label": "B"
+              },
+              {
+                "value": "a",
+                "label": "A"
+              }
+            ]
+          }
+        }
+      ],
+      "translations": {
+        "bn": {
+          "steps": {
+            "s1": {
+              "options": {
+                "a": "bA",
+                "gone": "bGone",
+                "b": "bB"
+              }
+            },
+            "removed": {
+              "title": "bRemoved",
+              "options": {
+                "a": "x"
+              }
+            }
+          }
+        }
+      }
+    },
+    "lang": "bn",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "submitLabel": "S",
+      "nextLabel": "N",
+      "backLabel": "B",
+      "thanks": {
+        "title": "T",
+        "subtitle": "U"
+      },
+      "chat": {
+        "sendLabel": "a",
+        "skipLabel": "b",
+        "endLabel": "c",
+        "typingLabel": "d",
+        "logLabel": "e"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "followup",
+          "title": "T1",
+          "input": {
+            "type": "selectOne",
+            "options": [
+              {
+                "value": "b",
+                "label": "bB"
+              },
+              {
+                "value": "a",
+                "label": "bA"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "absent nextLabel is filled from the bn table",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "languages": [
+        "en",
+        "bn"
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "star",
+          "title": "T1"
+        }
+      ]
+    },
+    "lang": "bn",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "star",
+          "title": "T1"
+        }
+      ],
+      "submitLabel": "জমা দিন",
+      "nextLabel": "পরবর্তী",
+      "backLabel": "পিছনে",
+      "thanks": {
+        "title": "প্রতিক্রিয়া দেওয়ার জন্য ধন্যবাদ!",
+        "subtitle": "আমরা প্রতিটি উত্তর পড়ি — সত্যিই।"
+      },
+      "chat": {
+        "sendLabel": "পাঠান",
+        "skipLabel": "এড়িয়ে যান",
+        "endLabel": "কথোপকথন শেষ করুন",
+        "typingLabel": "{name} লিখছে",
+        "logLabel": "{name}-এর সাথে কথোপকথন"
+      }
+    }
+  },
+  {
+    "name": "absent nextLabel stays absent for en-GB",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "defaultLanguage": "bn",
+      "languages": [
+        "bn",
+        "en-GB"
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "বিএন"
+        }
+      ],
+      "translations": {
+        "en-GB": {
+          "steps": {
+            "s1": {
+              "title": "Hello"
+            }
+          }
+        }
+      }
+    },
+    "lang": "en-GB",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "Hello"
+        }
+      ]
+    }
+  },
+  {
+    "name": "unknown language xx shows default text (same object)",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "defaultLanguage": "en",
+      "languages": [
+        "en",
+        "bn"
+      ],
+      "nextLabel": "Next",
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "Rate us"
+        }
+      ],
+      "translations": {
+        "bn": {
+          "nextLabel": "bNext",
+          "steps": {
+            "s1": {
+              "title": "বিএন"
+            }
+          }
+        }
+      }
+    },
+    "lang": "xx",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "defaultLanguage": "en",
+      "languages": [
+        "en",
+        "bn"
+      ],
+      "nextLabel": "Next",
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "Rate us"
+        }
+      ],
+      "translations": {
+        "bn": {
+          "nextLabel": "bNext",
+          "steps": {
+            "s1": {
+              "title": "বিএন"
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "bn-BD resolves to bn",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "defaultLanguage": "en",
+      "languages": [
+        "en",
+        "bn"
+      ],
+      "nextLabel": "Next",
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "Rate us",
+          "labels": {
+            "low": "a",
+            "high": "b"
+          }
+        }
+      ],
+      "translations": {
+        "bn": {
+          "nextLabel": "bNext",
+          "steps": {
+            "s1": {
+              "title": "bRate"
+            }
+          }
+        }
+      }
+    },
+    "lang": "bn-BD",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "nextLabel": "bNext",
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "bRate",
+          "labels": {
+            "low": "a",
+            "high": "b"
+          }
+        }
+      ],
+      "submitLabel": "জমা দিন",
+      "backLabel": "পিছনে",
+      "thanks": {
+        "title": "প্রতিক্রিয়া দেওয়ার জন্য ধন্যবাদ!",
+        "subtitle": "আমরা প্রতিটি উত্তর পড়ি — সত্যিই।"
+      },
+      "chat": {
+        "sendLabel": "পাঠান",
+        "skipLabel": "এড়িয়ে যান",
+        "endLabel": "কথোপকথন শেষ করুন",
+        "typingLabel": "{name} লিখছে",
+        "logLabel": "{name}-এর সাথে কথোপকথন"
+      }
+    }
+  },
+  {
+    "name": "default language listed twice",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "defaultLanguage": "en",
+      "languages": [
+        "en",
+        "en",
+        "bn"
+      ],
+      "nextLabel": "Next",
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "Rate us"
+        }
+      ],
+      "translations": {
+        "bn": {
+          "steps": {
+            "s1": {
+              "title": "bRate"
+            }
+          }
+        }
+      }
+    },
+    "lang": "bn",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "bRate",
+          "labels": {
+            "low": "সম্ভাবনা কম",
+            "high": "খুবই সম্ভাবনা"
+          }
+        }
+      ],
+      "submitLabel": "জমা দিন",
+      "nextLabel": "Next",
+      "backLabel": "পিছনে",
+      "thanks": {
+        "title": "প্রতিক্রিয়া দেওয়ার জন্য ধন্যবাদ!",
+        "subtitle": "আমরা প্রতিটি উত্তর পড়ি — সত্যিই।"
+      },
+      "chat": {
+        "sendLabel": "পাঠান",
+        "skipLabel": "এড়িয়ে যান",
+        "endLabel": "কথোপকথন শেষ করুন",
+        "typingLabel": "{name} লিখছে",
+        "logLabel": "{name}-এর সাথে কথোপকথন"
+      }
+    }
+  },
+  {
+    "name": "language with no translations shows default text plus built-in fills",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "defaultLanguage": "en",
+      "languages": [
+        "en",
+        "bn",
+        "fr"
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "Rate us",
+          "labels": {
+            "low": "Low",
+            "high": "High"
+          }
+        }
+      ],
+      "translations": {
+        "bn": {
+          "steps": {
+            "s1": {
+              "title": "bRate"
+            }
+          }
+        }
+      }
+    },
+    "lang": "fr",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "Rate us",
+          "labels": {
+            "low": "Low",
+            "high": "High"
+          }
+        }
+      ],
+      "submitLabel": "Envoyer",
+      "nextLabel": "Suivant",
+      "backLabel": "Retour",
+      "thanks": {
+        "title": "Merci pour votre avis !",
+        "subtitle": "Nous lisons chaque réponse, vraiment."
+      },
+      "chat": {
+        "sendLabel": "Envoyer",
+        "skipLabel": "Passer",
+        "endLabel": "Terminer la conversation",
+        "typingLabel": "{name} est en train d’écrire",
+        "logLabel": "Conversation avec {name}"
+      }
+    }
+  },
+  {
+    "name": "blank translation strings are ignored",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "defaultLanguage": "en",
+      "languages": [
+        "en",
+        "bn"
+      ],
+      "nextLabel": "Next",
+      "backLabel": "Back",
+      "submitLabel": "Submit",
+      "thanks": {
+        "title": "T",
+        "subtitle": "U"
+      },
+      "chat": {
+        "sendLabel": "a",
+        "skipLabel": "b",
+        "endLabel": "c",
+        "typingLabel": "d",
+        "logLabel": "e"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "Rate us",
+          "subtitle": "Sub",
+          "labels": {
+            "low": "L",
+            "high": "H"
+          }
+        }
+      ],
+      "translations": {
+        "bn": {
+          "nextLabel": "  ",
+          "steps": {
+            "s1": {
+              "title": "",
+              "subtitle": " ",
+              "labels": {
+                "low": "",
+                "high": "\n"
+              }
+            }
+          }
+        }
+      }
+    },
+    "lang": "bn",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "nextLabel": "Next",
+      "backLabel": "Back",
+      "submitLabel": "Submit",
+      "thanks": {
+        "title": "T",
+        "subtitle": "U"
+      },
+      "chat": {
+        "sendLabel": "a",
+        "skipLabel": "b",
+        "endLabel": "c",
+        "typingLabel": "d",
+        "logLabel": "e"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "Rate us",
+          "subtitle": "Sub",
+          "labels": {
+            "low": "L",
+            "high": "H"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "absent scale labels and pmf options are filled from the bn table",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "languages": [
+        "en",
+        "bn"
+      ],
+      "submitLabel": "S",
+      "nextLabel": "N",
+      "backLabel": "B",
+      "thanks": {
+        "title": "T",
+        "subtitle": "U"
+      },
+      "chat": {
+        "sendLabel": "a",
+        "skipLabel": "b",
+        "endLabel": "c",
+        "typingLabel": "d",
+        "logLabel": "e"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "T1"
+        },
+        {
+          "id": "s2",
+          "kind": "enps",
+          "title": "T2"
+        },
+        {
+          "id": "s3",
+          "kind": "ces",
+          "title": "T3"
+        },
+        {
+          "id": "s4",
+          "kind": "csat",
+          "title": "T4"
+        },
+        {
+          "id": "s5",
+          "kind": "pmf",
+          "title": "T5"
+        }
+      ]
+    },
+    "lang": "bn",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "submitLabel": "S",
+      "nextLabel": "N",
+      "backLabel": "B",
+      "thanks": {
+        "title": "T",
+        "subtitle": "U"
+      },
+      "chat": {
+        "sendLabel": "a",
+        "skipLabel": "b",
+        "endLabel": "c",
+        "typingLabel": "d",
+        "logLabel": "e"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "T1",
+          "labels": {
+            "low": "সম্ভাবনা কম",
+            "high": "খুবই সম্ভাবনা"
+          }
+        },
+        {
+          "id": "s2",
+          "kind": "enps",
+          "title": "T2",
+          "labels": {
+            "low": "অসম্ভাব্য",
+            "high": "খুবই সম্ভাব্য"
+          }
+        },
+        {
+          "id": "s3",
+          "kind": "ces",
+          "title": "T3",
+          "labels": {
+            "low": "খুব কঠিন",
+            "high": "খুব সহজ"
+          }
+        },
+        {
+          "id": "s4",
+          "kind": "csat",
+          "title": "T4",
+          "labels": [
+            "খুবই অসন্তুষ্ট",
+            "অসন্তুষ্ট",
+            "নিরপেক্ষ",
+            "সন্তুষ্ট",
+            "খুবই সন্তুষ্ট"
+          ]
+        },
+        {
+          "id": "s5",
+          "kind": "pmf",
+          "title": "T5",
+          "options": [
+            {
+              "value": "very",
+              "label": "খুব হতাশ হব",
+              "emoji": "😢"
+            },
+            {
+              "value": "somewhat",
+              "label": "কিছুটা হতাশ হব",
+              "emoji": "😕"
+            },
+            {
+              "value": "not",
+              "label": "হতাশ হব না",
+              "emoji": "🤷"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "regional variants: zh-Hant-TW on en+zh-Hans+zh-Hant",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "submitLabel": "S",
+      "nextLabel": "N",
+      "backLabel": "B",
+      "thanks": {
+        "title": "T",
+        "subtitle": "U"
+      },
+      "chat": {
+        "sendLabel": "a",
+        "skipLabel": "b",
+        "endLabel": "c",
+        "typingLabel": "d",
+        "logLabel": "e"
+      },
+      "defaultLanguage": "en",
+      "languages": [
+        "en",
+        "zh-Hans",
+        "zh-Hant"
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "D",
+          "labels": {
+            "low": "l",
+            "high": "h"
+          }
+        }
+      ],
+      "translations": {
+        "zh-Hans": {
+          "steps": {
+            "s1": {
+              "title": "Simplified"
+            }
+          }
+        },
+        "zh-Hant": {
+          "steps": {
+            "s1": {
+              "title": "Traditional"
+            }
+          }
+        }
+      }
+    },
+    "lang": "zh-Hant-TW",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "submitLabel": "S",
+      "nextLabel": "N",
+      "backLabel": "B",
+      "thanks": {
+        "title": "T",
+        "subtitle": "U"
+      },
+      "chat": {
+        "sendLabel": "a",
+        "skipLabel": "b",
+        "endLabel": "c",
+        "typingLabel": "d",
+        "logLabel": "e"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "Traditional",
+          "labels": {
+            "low": "l",
+            "high": "h"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "regional variants: zh on en+zh-Hans+zh-Hant",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "submitLabel": "S",
+      "nextLabel": "N",
+      "backLabel": "B",
+      "thanks": {
+        "title": "T",
+        "subtitle": "U"
+      },
+      "chat": {
+        "sendLabel": "a",
+        "skipLabel": "b",
+        "endLabel": "c",
+        "typingLabel": "d",
+        "logLabel": "e"
+      },
+      "defaultLanguage": "en",
+      "languages": [
+        "en",
+        "zh-Hans",
+        "zh-Hant"
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "D",
+          "labels": {
+            "low": "l",
+            "high": "h"
+          }
+        }
+      ],
+      "translations": {
+        "zh-Hans": {
+          "steps": {
+            "s1": {
+              "title": "Simplified"
+            }
+          }
+        },
+        "zh-Hant": {
+          "steps": {
+            "s1": {
+              "title": "Traditional"
+            }
+          }
+        }
+      }
+    },
+    "lang": "zh",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "submitLabel": "S",
+      "nextLabel": "N",
+      "backLabel": "B",
+      "thanks": {
+        "title": "T",
+        "subtitle": "U"
+      },
+      "chat": {
+        "sendLabel": "a",
+        "skipLabel": "b",
+        "endLabel": "c",
+        "typingLabel": "d",
+        "logLabel": "e"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "Simplified",
+          "labels": {
+            "low": "l",
+            "high": "h"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "regional variants: pt-PT on pt-BR+pt-PT",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "submitLabel": "S",
+      "nextLabel": "N",
+      "backLabel": "B",
+      "thanks": {
+        "title": "T",
+        "subtitle": "U"
+      },
+      "chat": {
+        "sendLabel": "a",
+        "skipLabel": "b",
+        "endLabel": "c",
+        "typingLabel": "d",
+        "logLabel": "e"
+      },
+      "defaultLanguage": "pt-BR",
+      "languages": [
+        "pt-BR",
+        "pt-PT"
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "D",
+          "labels": {
+            "low": "l",
+            "high": "h"
+          }
+        }
+      ],
+      "translations": {
+        "pt-PT": {
+          "steps": {
+            "s1": {
+              "title": "Portugal"
+            }
+          }
+        }
+      }
+    },
+    "lang": "pt-PT",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "submitLabel": "S",
+      "nextLabel": "N",
+      "backLabel": "B",
+      "thanks": {
+        "title": "T",
+        "subtitle": "U"
+      },
+      "chat": {
+        "sendLabel": "a",
+        "skipLabel": "b",
+        "endLabel": "c",
+        "typingLabel": "d",
+        "logLabel": "e"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "Portugal",
+          "labels": {
+            "low": "l",
+            "high": "h"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "regional variants: pt_br on en+pt_BR",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "submitLabel": "S",
+      "nextLabel": "N",
+      "backLabel": "B",
+      "thanks": {
+        "title": "T",
+        "subtitle": "U"
+      },
+      "chat": {
+        "sendLabel": "a",
+        "skipLabel": "b",
+        "endLabel": "c",
+        "typingLabel": "d",
+        "logLabel": "e"
+      },
+      "defaultLanguage": "en",
+      "languages": [
+        "en",
+        "pt_BR"
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "D",
+          "labels": {
+            "low": "l",
+            "high": "h"
+          }
+        }
+      ],
+      "translations": {
+        "PT-br": {
+          "steps": {
+            "s1": {
+              "title": "Brasil"
+            }
+          }
+        }
+      }
+    },
+    "lang": "pt_br",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "submitLabel": "S",
+      "nextLabel": "N",
+      "backLabel": "B",
+      "thanks": {
+        "title": "T",
+        "subtitle": "U"
+      },
+      "chat": {
+        "sendLabel": "a",
+        "skipLabel": "b",
+        "endLabel": "c",
+        "typingLabel": "d",
+        "logLabel": "e"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "Brasil",
+          "labels": {
+            "low": "l",
+            "high": "h"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "regional variants: en-GB on en-US+en-GB",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "submitLabel": "S",
+      "nextLabel": "N",
+      "backLabel": "B",
+      "thanks": {
+        "title": "T",
+        "subtitle": "U"
+      },
+      "chat": {
+        "sendLabel": "a",
+        "skipLabel": "b",
+        "endLabel": "c",
+        "typingLabel": "d",
+        "logLabel": "e"
+      },
+      "defaultLanguage": "en-US",
+      "languages": [
+        "en-US",
+        "en-GB"
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "D",
+          "labels": {
+            "low": "l",
+            "high": "h"
+          }
+        }
+      ],
+      "translations": {
+        "en-GB": {
+          "steps": {
+            "s1": {
+              "title": "UK"
+            }
+          }
+        }
+      }
+    },
+    "lang": "en-GB",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "submitLabel": "S",
+      "nextLabel": "N",
+      "backLabel": "B",
+      "thanks": {
+        "title": "T",
+        "subtitle": "U"
+      },
+      "chat": {
+        "sendLabel": "a",
+        "skipLabel": "b",
+        "endLabel": "c",
+        "typingLabel": "d",
+        "logLabel": "e"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "UK",
+          "labels": {
+            "low": "l",
+            "high": "h"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "single-language form with a bn default gets bn built-in texts",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "defaultLanguage": "bn",
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "star",
+          "title": "T1"
+        }
+      ]
+    },
+    "lang": "bn",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "star",
+          "title": "T1"
+        }
+      ],
+      "submitLabel": "জমা দিন",
+      "nextLabel": "পরবর্তী",
+      "backLabel": "পিছনে",
+      "thanks": {
+        "title": "প্রতিক্রিয়া দেওয়ার জন্য ধন্যবাদ!",
+        "subtitle": "আমরা প্রতিটি উত্তর পড়ি — সত্যিই।"
+      },
+      "chat": {
+        "sendLabel": "পাঠান",
+        "skipLabel": "এড়িয়ে যান",
+        "endLabel": "কথোপকথন শেষ করুন",
+        "typingLabel": "{name} লিখছে",
+        "logLabel": "{name}-এর সাথে কথোপকথন"
+      }
+    }
+  },
+  {
+    "name": "single-language form with a default that has no table is unchanged (same object)",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "defaultLanguage": "ru",
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "star",
+          "title": "T1"
+        }
+      ]
+    },
+    "lang": "ru",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "defaultLanguage": "ru",
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "star",
+          "title": "T1"
+        }
+      ]
+    }
+  },
+  {
+    "name": "bn default shown as bn: only absent texts are filled",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "defaultLanguage": "bn",
+      "languages": [
+        "bn",
+        "en"
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "star",
+          "title": "বাংলা"
+        }
+      ],
+      "translations": {
+        "en": {
+          "steps": {
+            "s1": {
+              "title": "English"
+            }
+          }
+        }
+      }
+    },
+    "lang": "bn",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "star",
+          "title": "বাংলা"
+        }
+      ],
+      "submitLabel": "জমা দিন",
+      "nextLabel": "পরবর্তী",
+      "backLabel": "পিছনে",
+      "thanks": {
+        "title": "প্রতিক্রিয়া দেওয়ার জন্য ধন্যবাদ!",
+        "subtitle": "আমরা প্রতিটি উত্তর পড়ি — সত্যিই।"
+      },
+      "chat": {
+        "sendLabel": "পাঠান",
+        "skipLabel": "এড়িয়ে যান",
+        "endLabel": "কথোপকথন শেষ করুন",
+        "typingLabel": "{name} লিখছে",
+        "logLabel": "{name}-এর সাথে কথোপকথন"
+      }
+    }
+  },
+  {
+    "name": "bn default switched to en: English as stored, no fills",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "defaultLanguage": "bn",
+      "languages": [
+        "bn",
+        "en"
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "star",
+          "title": "বাংলা"
+        }
+      ],
+      "translations": {
+        "en": {
+          "steps": {
+            "s1": {
+              "title": "English"
+            }
+          }
+        }
+      }
+    },
+    "lang": "en",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "star",
+          "title": "English"
+        }
+      ]
+    }
+  },
+  {
+    "name": "translations apply to absent csat labels, pmf options and scale labels when the language has no table",
+    "content": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "submitLabel": "S",
+      "nextLabel": "N",
+      "backLabel": "B",
+      "thanks": {
+        "title": "T",
+        "subtitle": "U"
+      },
+      "chat": {
+        "sendLabel": "a",
+        "skipLabel": "b",
+        "endLabel": "c",
+        "typingLabel": "d",
+        "logLabel": "e"
+      },
+      "defaultLanguage": "en",
+      "languages": [
+        "en",
+        "ru"
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "T1"
+        },
+        {
+          "id": "s2",
+          "kind": "csat",
+          "title": "T2"
+        },
+        {
+          "id": "s3",
+          "kind": "pmf",
+          "title": "T3",
+          "options": []
+        },
+        {
+          "id": "s4",
+          "kind": "csat",
+          "title": "T4"
+        }
+      ],
+      "translations": {
+        "ru": {
+          "steps": {
+            "s1": {
+              "labels": {
+                "low": "rl"
+              }
+            },
+            "s2": {
+              "labels": [
+                "a",
+                "",
+                "",
+                "",
+                "e"
+              ]
+            },
+            "s3": {
+              "options": {
+                "very": "rV"
+              }
+            }
+          }
+        }
+      }
+    },
+    "lang": "ru",
+    "expected": {
+      "kind": "feedback",
+      "brand": {
+        "color": "#2F9461"
+      },
+      "submitLabel": "S",
+      "nextLabel": "N",
+      "backLabel": "B",
+      "thanks": {
+        "title": "T",
+        "subtitle": "U"
+      },
+      "chat": {
+        "sendLabel": "a",
+        "skipLabel": "b",
+        "endLabel": "c",
+        "typingLabel": "d",
+        "logLabel": "e"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "kind": "nps",
+          "title": "T1",
+          "labels": {
+            "low": "rl",
+            "high": "Extremely likely"
+          }
+        },
+        {
+          "id": "s2",
+          "kind": "csat",
+          "title": "T2",
+          "labels": [
+            "a",
+            "Dissatisfied",
+            "Neutral",
+            "Satisfied",
+            "e"
+          ]
+        },
+        {
+          "id": "s3",
+          "kind": "pmf",
+          "title": "T3",
+          "options": [
+            {
+              "value": "very",
+              "label": "rV",
+              "emoji": "😢"
+            },
+            {
+              "value": "somewhat",
+              "label": "Somewhat disappointed",
+              "emoji": "😕"
+            },
+            {
+              "value": "not",
+              "label": "Not disappointed",
+              "emoji": "🤷"
+            }
+          ]
+        },
+        {
+          "id": "s4",
+          "kind": "csat",
+          "title": "T4"
+        }
+      ]
+    }
+  }
+]
