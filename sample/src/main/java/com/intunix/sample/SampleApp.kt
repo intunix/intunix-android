@@ -7,6 +7,6 @@ import com.intunix.sdk.IntunixOptions
 class SampleApp : Application() {
     override fun onCreate() {
         super.onCreate()
-        Intunix.init(this, BuildConfig.API_KEY, IntunixOptions(registerAll = true, debug = true))
+        Intunix.init(this, BuildConfig.API_KEY, IntunixOptions(apiHost = BuildConfig.API_HOST, registerAll = true, debug = true))
     }
 }

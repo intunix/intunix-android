@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -39,20 +40,29 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun Screen() {
-    val form = BuildConfig.FORM
     Column(
         Modifier.fillMaxSize().background(Color(0xFFF4F4F5)).safeDrawingPadding().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BasicText("Intunix ${Intunix.VERSION}", style = TextStyle(fontSize = 22.sp))
-        if (form.isEmpty()) BasicText("Set intunix.apiKey and intunix.form in local.properties.", style = TextStyle(color = Color.Gray))
-        Button("Show form as a popup") { Intunix.showForm(form) }
+        Button("Chat with Nia (popup)") { Intunix.showForm("lang-chat") }
+        Button("Survey (popup)") { Intunix.showForm("lang-popup") }
+        BasicText("App language", style = TextStyle(fontSize = 16.sp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            for ((label, tag) in listOf("English" to "en", "বাংলা" to "bn", "العربية" to "ar")) {
+                Box(Modifier.weight(1f)) { Button(label) { Intunix.setLocale(tag) } }
+            }
+        }
         Button("Track \"checkout_completed\"") { Intunix.track("checkout_completed") }
         Button("Identify demo user") { Intunix.identify("demo-user", mapOf("plan" to "pro")) }
         Button("Reset (log out)") { Intunix.reset() }
         BasicText("Inline form", style = TextStyle(fontSize = 16.sp))
         Box(Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(16.dp)).padding(20.dp)) {
-            if (form.isNotEmpty()) IntunixForm(form)
+            IntunixForm("lang-inline")
+        }
+        BasicText("Inline chat (Arabic)", style = TextStyle(fontSize = 16.sp))
+        Box(Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(16.dp)).padding(20.dp)) {
+            IntunixForm("lang-chat", locale = "ar")
         }
     }
 }

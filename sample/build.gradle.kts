@@ -19,8 +19,9 @@ android {
         val props = Properties().apply {
             rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
         }
-        buildConfigField("String", "API_KEY", "\"${props.getProperty("intunix.apiKey", "")}\"")
-        buildConfigField("String", "FORM", "\"${props.getProperty("intunix.form", "")}\"")
+        buildConfigField("String", "API_KEY", "\"${props.getProperty("intunix.apiKey", "ck_mock")}\"")
+        buildConfigField("String", "FORM", "\"${props.getProperty("intunix.form", "lang-chat")}\"")
+        buildConfigField("String", "API_HOST", "\"${props.getProperty("intunix.apiHost", "http://10.0.2.2:4100")}\"")
     }
     buildFeatures { compose = true; buildConfig = true }
     compileOptions {
