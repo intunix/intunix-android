@@ -114,6 +114,42 @@ IntunixForm("nps-q3", theme = IntunixTheme.Light)
 If your app has only a light theme but still runs in night mode, pass
 `IntunixTheme.Light`.
 
+### Languages
+
+A form can be written in several languages (set up in the console). Which one a respondent
+sees is chosen automatically, in this order:
+
+1. the language the respondent picked in the form's switcher (remembered on the device);
+2. your app's language: the `locale` option, `setLocale()`, or the per-form `locale`;
+3. the device's language list;
+4. the form's own default language.
+
+A form with two or more languages shows a language switcher; switching keeps the answers.
+Right-to-left languages (Arabic, Persian, Hebrew, Urdu) lay out right to left natively.
+Responses carry the `language` they were answered in.
+
+```kotlin
+Intunix.init(this, "int_sk_xxx", IntunixOptions(locale = "bn"))   // the app's language
+Intunix.setLocale("pt-BR")                                        // any time; replaces the remembered choice
+IntunixForm("nps-q3", locale = "ar")                              // this form only
+```
+
+`setLocale()` replaces the remembered choice, so use it when the user picks a language in
+your own settings screen. A form reads its locale when it loads; a form already on screen
+keeps its language until it is shown again. `reset()` (on logout) forgets the remembered
+language. Limit: a follow-up question asked before a language switch stays in the language
+it was asked in.
+
+In the View system, set `IntunixFormView.locale = "ar"` before the form loads.
+
+### Conversational forms
+
+Forms can be AI-enhanced (follow-up questions after an answer) or run as a chat. Both are
+set in the console, so there is nothing to code and no change to existing `showForm` or
+inline form calls. The assistant's name is set in the console too (default "Nia"). If the AI
+is unreachable (offline, or a server error) the form carries on with its own questions. A
+conversation resumes after an app restart until it ends.
+
 ### Triggers
 
 Event (`track`), app screen (`screen`, matching exact / contains / regex), user trait
@@ -125,6 +161,8 @@ exit intent) are ignored. A form set to show on **Web** only never shows in apps
 The same endpoints as the web SDK, with channel `mobile_sdk` and the header
 `x-intunix-sdk: android/<version>`. Events that fail to upload are kept on the device and
 retried for a day. A session ends after 30 minutes in the background.
+The `language` the respondent answered in is sent with each response. Conversational
+and AI-enhanced forms also send `conversation_id` and use `POST /sdk/forms/:id/turn`.
 
 The SDK keeps its anonymous id and per-form show history in the `intunix` SharedPreferences
 file. Android Auto Backup restores it after a reinstall unless your backup rules exclude it.
@@ -137,4 +175,9 @@ file. Android Auto Backup restores it after a reinstall unless your backup rules
 ./gradlew :sample:installDebug            # sample app
 ```
 
-For the sample app, put `intunix.apiKey=ck_...` and `intunix.form=<slug>` in `local.properties`.
+`localize.json` (the shared language fixture) is copied from intunix-sdk; replace it, never edit it.
+
+The sample runs against a mock API (`node examples/languages/server.mjs` in intunix-sdk) with
+the `lang-chat`, `lang-popup` and `lang-inline` forms. It reaches your computer at `10.0.2.2`,
+which works on the Android emulator only; on a physical device set `intunix.apiHost=http://<your computer's LAN IP>:4100`
+in `local.properties`. `intunix.apiKey` can be set there too (default `ck_mock`).
