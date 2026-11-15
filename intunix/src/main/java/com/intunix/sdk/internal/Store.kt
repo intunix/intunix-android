@@ -31,6 +31,18 @@ internal class LanguageStore(private val store: KeyValueStore) {
     private companion object { const val KEY = "intunix:lang" }
 }
 
+/** One conversation id per form, so a reopened form resumes; cleared when a show ends. */
+internal class ConversationIds(private val store: KeyValueStore) {
+    fun idFor(formId: String): String {
+        val all = read()
+        return all.str(formId) ?: newId().also { store.set(KEY, all.put(formId, it).toString()) }
+    }
+    fun clear(formId: String) { val all = read(); if (all.has(formId)) store.set(KEY, all.apply { remove(formId) }.toString()) }
+    fun clearAll() = store.remove(KEY)
+    private fun read() = store.get(KEY)?.let { runCatching { JSONObject(it) }.getOrNull() } ?: JSONObject()
+    private companion object { const val KEY = "intunix:conv" }
+}
+
 internal fun newId(): String = java.util.UUID.randomUUID().toString()
 
 internal class AnonId(private val store: KeyValueStore) {

@@ -64,6 +64,7 @@ internal data class Experience(
     val frequencyScope: String?,
     val autoActivate: Boolean,
     val reviewRequest: ReviewRequestConfig?,
+    val conversation: ConversationConfig? = null,
 )
 
 internal fun parseWait(v: Any?): Wait? = when (v) {
@@ -141,5 +142,6 @@ internal fun parseExperience(o: JSONObject): Experience? {
         frequencyScope = o.str("frequencyScope"),
         autoActivate = o.bool("autoActivate") == true,
         reviewRequest = review,
+        conversation = parseConversationConfig(o.obj("conversation")),
     )
 }

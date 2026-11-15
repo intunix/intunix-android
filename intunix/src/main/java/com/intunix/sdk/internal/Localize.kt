@@ -5,7 +5,7 @@ import org.json.JSONObject
 
 private fun blank(s: String?) = s == null || s.isBlank()
 /** Translation, else the form's own text, else the built-in fill. Null when none exists. */
-private fun pick(tr: String?, own: String?, fill: String? = null): String? = if (blank(tr)) own ?: fill else tr
+internal fun pick(tr: String?, own: String?, fill: String? = null): String? = if (blank(tr)) own ?: fill else tr
 // shortcut: deep copy through text; forms are a few KB, so upgrade only if profiling shows it.
 private fun JSONObject.copy() = JSONObject(toString())
 private fun JSONObject.putIf(k: String, v: String?) = apply { if (v != null) put(k, v) }

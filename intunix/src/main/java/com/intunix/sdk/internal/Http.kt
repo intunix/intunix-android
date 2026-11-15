@@ -60,3 +60,5 @@ internal suspend fun <T> retry(retries: Int = 2, baseMs: Long = 500, maxMs: Long
         attempt++
     }
 }
+
+internal fun enc(s: String): String = java.net.URLEncoder.encode(s, "UTF-8").replace("+", "%20")

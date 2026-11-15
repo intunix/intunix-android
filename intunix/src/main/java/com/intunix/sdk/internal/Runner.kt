@@ -64,7 +64,7 @@ internal class FeedbackRunner(
 
     fun record(ans: Answer): RunnerState {
         if (phase != Phase.RUNNING || !onPage(ans.stepId)) return state()
-        if (isEmpty(ans)) return clear(ans.stepId)
+        if (isEmptyAnswer(ans)) return clear(ans.stepId)
         val i = answers.indexOfFirst { it.stepId == ans.stepId }
         if (i >= 0) answers[i] = ans else answers.add(ans)
         recompute()
@@ -196,11 +196,11 @@ internal class FeedbackRunner(
         val step = visible.firstOrNull { it.id == a.stepId }
         step != null && isAnswerValid(step, a)
     }
+}
 
-    private fun isEmpty(a: Answer): Boolean = when (val v = a.value) {
-        is AnswerValue.Text -> v.text.isBlank()
-        is AnswerValue.Many -> v.selected.isEmpty()
-        is AnswerValue.One -> v.selected.isEmpty()
-        else -> false
-    }
+internal fun isEmptyAnswer(a: Answer): Boolean = when (val v = a.value) {
+    is AnswerValue.Text -> v.text.isBlank()
+    is AnswerValue.Many -> v.selected.isEmpty()
+    is AnswerValue.One -> v.selected.isEmpty()
+    else -> false
 }

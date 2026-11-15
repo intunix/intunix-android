@@ -13,6 +13,7 @@ internal data class RenderCallbacks(
     val clientResponseId: String,
     val onReviewEvent: (ReviewEvent) -> Unit,
     val locale: LocaleSource? = null,
+    val conversation: ConversationHandle? = null,
 )
 
 internal data class ExperienceResult(val outcome: String, val response: FeedbackResponse?)
@@ -56,6 +57,7 @@ internal class IntunixClient(
     private val profile = ProfileStore(store, clock)
     private val shown = ShownStore(store)
     private val languages = LanguageStore(store)
+    private val conversations = ConversationIds(store)
     private var locale = cfg.locale
     private val initLocale = cfg.locale
     private val offline = OfflineStore(store, clock)
@@ -203,6 +205,7 @@ internal class IntunixClient(
         session.reset()
         context.clear()
         languages.clear()
+        conversations.clearAll()
         locale = initLocale
     }
 
@@ -282,6 +285,7 @@ internal class IntunixClient(
             } catch (e: Exception) {
                 log.log('e', "render failed: ${e.message}")
                 track("\$sdk_error", mapOf("id" to id, "message" to e.message))
+                if (exp.conversation != null) conversations.clear(exp.id)
             } finally {
                 pendingShowContext.remove(id)
                 showing = false
@@ -310,10 +314,12 @@ internal class IntunixClient(
             })
         },
         locale = localeSource(formLocale),
+        conversation = exp.conversation?.let { ConversationHandle(it, sdkTransport(http, exp.id), conversations.idFor(exp.id), scope) },
     )
 
     /** Record the show for cadence and upload the answers. Also used by the inline IntunixForm. */
     internal fun settle(exp: Experience, ctx: Map<String, Any?>, result: ExperienceResult, responseId: String) {
+        if (exp.conversation != null) conversations.clear(exp.id)
         val key = identityKey(exp, user?.id ?: anon.get(), user?.traits ?: emptyMap(), ctx)
         shown.markShown(exp.id, key, clock(), session.id())
         profile.recordOutcome(exp.id, key, result.outcome)
@@ -353,8 +359,6 @@ internal class IntunixClient(
             log.log('w', "shown report failed: ${e.message}")
         }
     }
-
-    private fun enc(s: String) = java.net.URLEncoder.encode(s, "UTF-8").replace("+", "%20")
 
     private companion object { const val CACHE_KEY = "intunix:experiences:v2" }
 }
