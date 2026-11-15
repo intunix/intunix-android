@@ -6,6 +6,8 @@ import kotlin.coroutines.cancellation.CancellationException
 
 internal const val PROBE_TIMEOUT_MS = 10_000L
 
+private val INPUT_TYPES = setOf("free", "email", "name", "selectOne", "selectMultiple")
+
 internal data class ProbeUpdate(val drop: List<String>, val insert: List<Pair<String, Step>>)
 
 /** Asks the server, after answers to `aiFollowUp` steps, for one follow-up question (a probe). */
@@ -39,7 +41,7 @@ internal class EnhancedProbes(private val handle: ConversationHandle, private va
             val reply = ask(ans)
             if (reply?.done == true) finished = true
             val input = reply?.input
-            if (input != null && input.id.startsWith("probe:") && input.kind == "followup" && input.title.isNotEmpty() && seen.add(input.id)) {
+            if (input != null && input.id.startsWith("probe:") && input.kind == "followup" && input.input?.type in INPUT_TYPES && input.title.isNotEmpty() && seen.add(input.id)) {
                 origin[step.id] = (origin[step.id] ?: emptyList()) + input.id
                 insert += step.id to input
             }
@@ -57,7 +59,11 @@ internal class EnhancedProbes(private val handle: ConversationHandle, private va
         origin.remove(stepId)
     }
 
-    private fun parse(o: org.json.JSONObject) = parseTurnReply(o) ?: error("invalid reply")
+    /** Invalid shape is a failure; a valid reply whose input step we cannot build just carries no question. */
+    private fun parse(o: org.json.JSONObject): TurnReply {
+        if (!isValidTurnReply(o)) error("invalid reply")
+        return parseTurnReply(o) ?: parseTurnReply(org.json.JSONObject(o.toString()).put("input", org.json.JSONObject.NULL))!!
+    }
 
     /** One request (plus one busy retry) inside a single PROBE_TIMEOUT_MS budget. Null on failure. */
     private suspend fun ask(ans: Answer): TurnReply? {

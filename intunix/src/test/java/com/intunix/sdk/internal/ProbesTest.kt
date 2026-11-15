@@ -259,4 +259,22 @@ class ProbesTest {
         assertTrue(t.sent[0].locale == null)
         assertFalse(t.sent[0].toJson().has("locale"))
     }
+
+    @Test fun anUnbuildableInputIsSkippedWithoutDisablingAdvancingTheTurnAndHonouringDone() = runTest {
+        val unknownKind = JSONObject("""{"id":"probe:s1:1","kind":"hologram","title":"?"}""")
+        val unknownInput = JSONObject("""{"id":"probe:s1:2","kind":"followup","title":"?","input":{"type":"hologram"}}""")
+        val good = probe("probe:s1:3")
+        val t = Fake(reply(next = 2, input = unknownKind), reply(next = 3, input = unknownInput), reply(next = 4, input = good))
+        val p = probes(t)
+        val s = listOf(nps("s1"))
+        assertEquals(emptyList<Any>(), p.afterPage(s, listOf(ans("s1", 1))).insert)
+        assertEquals(emptyList<Any>(), p.afterPage(s, listOf(ans("s1", 2))).insert)
+        assertEquals(listOf("s1" to st(good)), p.afterPage(s, listOf(ans("s1", 3))).insert)
+        assertEquals(listOf(0, 2, 3), t.sent.map { it.turn })
+        val d = Fake(reply(next = 2, input = unknownKind, done = true))
+        val q = probes(d)
+        q.afterPage(s, listOf(ans("s1", 1)))
+        q.afterPage(listOf(nps("s2")), listOf(ans("s2")))
+        assertEquals(1, d.sent.size)
+    }
 }
