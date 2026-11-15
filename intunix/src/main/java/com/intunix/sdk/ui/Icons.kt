@@ -131,3 +131,21 @@ internal fun StarIcon(path: String, fill: Color, stroke: Color?, modifier: Modif
 internal fun CheckIcon(color: Color, modifier: Modifier = Modifier) {
     Canvas(modifier) { inViewBox(24f) { drawPath(IconSets.path(IconSets.CHECK), color) } }
 }
+
+@Composable
+internal fun GlobeIcon(color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier) {
+        inViewBox(24f) {
+            val line = Stroke(1.8f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+            drawCircle(color, 9f, Offset(12f, 12f), style = line)
+            drawPath(IconSets.path("M3 12h18M12 3c-3.5 3.2-3.5 14.8 0 18M12 3c3.5 3.2 3.5 14.8 0 18"), color, style = line)
+        }
+    }
+}
+
+@Composable
+internal fun CaretIcon(color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier) {
+        inViewBox(24f) { drawPath(IconSets.path("M6 9l6 6 6-6"), color, style = Stroke(2f, cap = StrokeCap.Round, join = StrokeJoin.Round)) }
+    }
+}

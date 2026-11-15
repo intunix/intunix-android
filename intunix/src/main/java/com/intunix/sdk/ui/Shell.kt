@@ -124,7 +124,7 @@ class IntunixFormActivity : ComponentActivity() {
         enableEdgeToEdge()
         val visible = MutableTransitionState(false).apply { targetState = true }
         val app = applicationContext
-        val h = p.host ?: FormHost(p.exp, p.content, p.callbacks, { openExternal(app, it) }) { r ->
+        val h = p.host ?: FormHost(p.exp, p.callbacks, { openExternal(app, it) }) { r ->
             p.result.complete(r)
             p.onClosed?.invoke()
         }.also { p.host = it }
@@ -162,13 +162,13 @@ private fun FormFrame(modal: Boolean, visible: MutableTransitionState<Boolean>, 
         if (modal) {
             Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).padding(16.dp), contentAlignment = Alignment.Center) {
                 AnimatedVisibility(visible, enter = fadeIn(tween(150)) + scaleIn(tween(180), initialScale = 0.96f), exit = fadeOut(tween(120))) {
-                    Card(Modifier.widthIn(max = 460.dp), RoundedCornerShape(16.dp), 24) { FeedbackForm(host) }
+                    Card(Modifier.widthIn(max = 460.dp), RoundedCornerShape(16.dp), 24) { if (host.chat != null) ChatForm(host) else FeedbackForm(host) }
                 }
             }
         } else {
             Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.ime), contentAlignment = Alignment.BottomCenter) {
                 AnimatedVisibility(visible, enter = slideInVertically(tween(220)) { it }, exit = slideOutVertically(tween(180)) { it }) {
-                    Card(Modifier.widthIn(max = 720.dp), RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp), 20, sheet = true) { FeedbackForm(host) }
+                    Card(Modifier.widthIn(max = 720.dp), RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp), 20, sheet = true) { if (host.chat != null) ChatForm(host) else FeedbackForm(host) }
                 }
             }
         }

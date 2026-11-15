@@ -46,6 +46,9 @@ class IntunixFormView @JvmOverloads constructor(context: Context, attrs: Attribu
      */
     var hostDark by mutableStateOf<Boolean?>(null)
 
+    /** Language to show a multi-language form in; null = [Intunix.setLocale] / device. */
+    var locale by mutableStateOf<String?>(null)
+
     /** Called once the visitor submits or closes the form. */
     var onFinished: (() -> Unit)? = null
     /** Content height in pixels whenever it changes (0 once the form is done). */
@@ -57,7 +60,7 @@ class IntunixFormView @JvmOverloads constructor(context: Context, attrs: Attribu
             val f = formId
             Box(Modifier.fillMaxWidth().onSizeChanged { report(it.height) }) {
                 if (f != null) androidx.compose.runtime.CompositionLocalProvider(LocalHostDark provides hostDark) {
-                    IntunixForm(f, Modifier.fillMaxWidth(), formContext, theme) { onFinished?.invoke() }
+                    IntunixForm(f, Modifier.fillMaxWidth(), formContext, theme, locale) { onFinished?.invoke() }
                 }
             }
         }

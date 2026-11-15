@@ -26,7 +26,7 @@ class FormScreenshotTest {
         val raw = JSONObject("""{"id":"f","type":"popup","content":{"kind":"feedback","brand":{"color":"#2F9461"},"steps":[$steps]},"triggers":[]}""")
         val exp = parseExperience(raw)!!
         val cb = RenderCallbacks({}, {}, {}, "r", {})
-        return FormHost(exp, parseFeedbackContent(exp.content)!!, cb, { true }) { _: ExperienceResult -> }.also { h ->
+        return FormHost(exp, cb, { true }) { _: ExperienceResult -> }.also { h ->
             answers.forEach { h.onChange(it.stepId, it) }
         }
     }

@@ -36,11 +36,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.os.LocaleList
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import com.intunix.sdk.internal.Answer
+import com.intunix.sdk.internal.BuiltinTexts
+import com.intunix.sdk.internal.ChatLabels
+import com.intunix.sdk.internal.ConversationController
+import com.intunix.sdk.internal.ConversationHandle
+import com.intunix.sdk.internal.ConversationState
+import com.intunix.sdk.internal.EnhancedProbes
+import com.intunix.sdk.internal.FeedbackResponse
+import com.intunix.sdk.internal.FormLanguage
+import com.intunix.sdk.internal.Step
+import com.intunix.sdk.internal.fillStep
+import com.intunix.sdk.internal.localizeConversation
+import com.intunix.sdk.internal.parseStep
+import com.intunix.sdk.internal.reviewQualifies
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import com.intunix.sdk.internal.Defaults
 import com.intunix.sdk.internal.Experience
 import com.intunix.sdk.internal.ExperienceResult
-import com.intunix.sdk.internal.FeedbackContent
 import com.intunix.sdk.internal.FeedbackRunner
 import com.intunix.sdk.internal.Phase
 import com.intunix.sdk.internal.RenderCallbacks
@@ -50,59 +70,133 @@ import kotlinx.coroutines.delay
 
 private val AUTO_SUBMIT = setOf("thumbs", "pmf", "smileys")
 
+internal fun deviceLanguages(): List<String> =
+    runCatching { LocaleList.getDefault().toLanguageTags().split(',') }.getOrDefault(emptyList())
+
 /** Form state and the rules of FeedbackExperience (React), independent of where it is drawn. */
 internal class FormHost(
     val exp: Experience,
-    val content: FeedbackContent,
     private val cb: RenderCallbacks,
     openUrl: (String) -> Boolean,
+    device: List<String> = deviceLanguages(),
+    scope: CoroutineScope = MainScope(),
     private val onResult: (ExperienceResult) -> Unit,
 ) {
-    private val runner = FeedbackRunner(content, exp.reviewRequest)
+    /** A child scope, so finishing the form cancels its work and never the caller's scope. */
+    private val job = SupervisorJob(scope.coroutineContext[Job])
+    private val scope = CoroutineScope(scope.coroutineContext + job)
+    val language = FormLanguage(exp.content, cb.locale, device)
+    var content by mutableStateOf(language.content)
+        private set
+    private val runner = FeedbackRunner(language.content, exp.reviewRequest)
     private var version by mutableIntStateOf(0)
     private var settled = false
-    val closable = content.closable
+    val closable = language.content.closable
     val review: ReviewPresenter? = ReviewPresenter.create(
-        exp.reviewRequest, exp.id, cb.clientResponseId, content.brand.color, cb.onReviewEvent, openUrl,
+        exp.reviewRequest, exp.id, cb.clientResponseId, language.content.brand.color, cb.onReviewEvent, openUrl,
     ) { finish() }
+
+    private val handle = cb.conversation
+    private val enhanced = handle?.config?.mode == "enhanced"
+    private val probes = if (enhanced) EnhancedProbes(handle!!, if (language.multi) language.lang else null) else null
+    var probing by mutableStateOf(false)
+        private set
+
+    val chat: ConversationController? = handle?.takeIf { it.config.mode == "conversational" }?.let { h ->
+        ConversationController(
+            language.content,
+            if (language.multi) ConversationHandle(localizeConversation(h.config, language.lang), h.transport, h.conversationId, h.scope) else h,
+            if (language.multi) language.lang else null,
+        )
+    }
+    var chatReview by mutableStateOf(false)
+        private set
+    private var doneHandled = false
+    private var unsubscribe: (() -> Unit)? = chat?.subscribe { bump(); onChatState() }
 
     private var impressed = false
 
     fun state() = version.let { runner.state() }
     fun isLastPage() = runner.isLastPage()
+    fun chatState(): ConversationState = version.let { chat!!.state() }
+    fun chatLabels(): ChatLabels = com.intunix.sdk.internal.chatLabels(content, handle!!.config)
+
+    fun chatInput(): Step? = chatState().let { s -> s.inputJson?.let { parseStep(fillStep(it, language.lang)) } ?: s.input }
 
     /** Once per form instance, however often the view is (re)composed. */
     fun impression() {
         if (impressed) return
         impressed = true
+        chat?.let { c -> scope.launch { c.start() } }
         cb.onImpression()
     }
 
     private fun bump() { version++ }
 
-    private fun finalize(r: ExperienceResult) {
+    private fun finalize(outcome: String, r: FeedbackResponse) {
         if (settled) return
         settled = true
-        onResult(r)
+        unsubscribe?.invoke()
+        if (chat?.state()?.endedByRespondent != true) chat?.dispose()
+        val full = if (chat == null && handle != null) r.copy(conversationId = handle.conversationId) else r
+        job.cancel()
+        onResult(ExperienceResult(outcome, language.decorate(full)))
     }
 
     fun finish() {
-        finalize(ExperienceResult("responded", runner.finish()))
+        finalize("responded", chat?.result() ?: runner.finish())
         bump()
     }
 
     fun close() {
+        if (settled) return
+        if (chat != null) return closeChat(chat)
         when (runner.state().phase) {
             Phase.REVIEW -> review?.onSkip() ?: finish()
             Phase.THANKS, Phase.DONE -> finish()
             Phase.RUNNING -> {
                 val r = runner.dismiss()
                 cb.onDismiss()
-                finalize(ExperienceResult(if (r.answers.isNotEmpty()) "responded" else "dismissed", r))
+                finalize(if (r.answers.isNotEmpty()) "responded" else "dismissed", r)
                 bump()
             }
         }
     }
+
+    private fun closeChat(c: ConversationController) {
+        when {
+            chatReview -> review?.onSkip() ?: finish()
+            c.state().done -> finish()
+            else -> {
+                unsubscribe?.invoke() // ending must not start the thanks timer
+                c.end()
+                cb.onDismiss()
+                val r = c.result()
+                finalize(if (r.answers.isNotEmpty()) "responded" else "dismissed", r)
+                bump()
+            }
+        }
+    }
+
+    private fun onChatState() {
+        val c = chat ?: return
+        if (!c.state().done || doneHandled) return
+        doneHandled = true
+        if (review != null && reviewQualifies(exp.reviewRequest, c.result().answers)) {
+            chatReview = true
+            review.onShown()
+        } else {
+            val ms = content.thanks?.autoCloseMs ?: Defaults.THANKS_AUTO_CLOSE_MS
+            if (ms > 0) scope.launch { delay(ms); finish() }
+        }
+    }
+
+    fun sendChat(a: Answer) {
+        val c = chat ?: return
+        scope.launch { if (c.answer(a) && !settled) cb.onResponse(a) }
+    }
+
+    fun skipChat() { chat?.let { c -> scope.launch { c.skip() } } }
 
     /** Thumbs / PMF / smileys submit on tap only when the whole form is that one question. */
     fun autoSubmit(): Boolean {
@@ -118,20 +212,54 @@ internal class FormHost(
     }
 
     fun submitPage() {
+        if (probing) return
         val s = runner.state()
         if (!isPageValid(s.pageSteps, s.answers)) return
         s.pageSteps.forEach { step -> s.answers.firstOrNull { it.stepId == step.id }?.let(cb.onResponse) }
-        runner.submitPage()
+        val p = probes
+        if (p == null) { runner.submitPage(); bump(); return }
+        probing = true
         bump()
+        scope.launch {
+            val u = runCatching { p.afterPage(s.pageSteps, s.answers) }.getOrNull()
+            probing = false
+            if (settled) return@launch
+            u?.drop?.forEach { runner.removeInsertedAfter(it) }
+            u?.insert?.forEach { (anchor, step) -> runner.insertAfter(anchor, step) }
+            runner.submitPage()
+            bump()
+        }
     }
 
-    fun back() { runner.back(); bump() }
+    fun back() { if (probing) return; runner.back(); bump() }
+
+    fun switchLanguage(code: String) {
+        if (!language.switchTo(code)) return
+        content = language.content
+        runner.setContent(content)
+        probes?.setLocale(code)
+        if (handle != null) chat?.setLanguage(code, content, localizeConversation(handle.config, code))
+        bump()
+    }
 }
+
+/** Mirrors the layout for right-to-left languages; a plain English form keeps its tree untouched. */
+@Composable
+internal fun RtlRoot(language: FormLanguage, content: @Composable () -> Unit) {
+    if (!language.decorated) content()
+    else CompositionLocalProvider(LocalLayoutDirection provides if (language.rtl) LayoutDirection.Rtl else LayoutDirection.Ltr, content = content)
+}
+
+internal fun switcherFor(host: FormHost, show: Boolean): (@Composable () -> Unit)? =
+    if (show && host.language.multi) {
+        { LanguageSwitcher(host.language.lang, host.language.options, host.language.texts()!!.language, host::switchLanguage) }
+    } else null
 
 /** The form itself (header, questions, footer, thanks, review card). The host decides the frame. */
 @Composable
 internal fun FeedbackForm(host: FormHost, modifier: Modifier = Modifier) {
     val content = host.content
+    val texts = host.language.texts()
     val live = host.state()
     // Keep drawing the last page while the frame animates out; DONE has nothing to show.
     val last = remember { mutableStateOf(live) }
@@ -151,17 +279,17 @@ internal fun FeedbackForm(host: FormHost, modifier: Modifier = Modifier) {
     }
     if (state.phase == Phase.DONE) return
 
-    CompositionLocalProvider(LocalBrand provides brandColors(content.brand.color, LocalPalette.current)) {
+    RtlRoot(host.language) { CompositionLocalProvider(LocalBrand provides brandColors(content.brand.color, LocalPalette.current)) {
         BoxWithConstraints(modifier.fillMaxWidth()) {
             CompositionLocalProvider(LocalWide provides (maxWidth >= Crisp.WideAt)) {
                 val ending = state.phase == Phase.THANKS || state.phase == Phase.REVIEW
                 Column(Modifier.fillMaxWidth()) {
-                    Header(state.pageIndex, state.pageCount, state.paged, ending, host.closable)
+                    Header(state.pageIndex, state.pageCount, state.paged, ending, host.closable, texts, switcherFor(host, state.phase == Phase.RUNNING))
                     when {
                         state.phase == Phase.REVIEW && host.review != null -> ReviewCard(host.review)
                         state.phase == Phase.THANKS -> Thanks(
-                            content.thanks?.title ?: Defaults.THANKS_TITLE,
-                            content.thanks?.subtitle ?: Defaults.THANKS_SUBTITLE,
+                            content.thanks?.title ?: texts?.thanksTitle ?: Defaults.THANKS_TITLE,
+                            content.thanks?.subtitle ?: texts?.thanksSubtitle ?: Defaults.THANKS_SUBTITLE,
                         )
                         state.pageSteps.isNotEmpty() -> {
                             state.pageSteps.forEachIndexed { i, step ->
@@ -174,9 +302,9 @@ internal fun FeedbackForm(host: FormHost, modifier: Modifier = Modifier) {
                             if (!host.autoSubmit()) {
                                 Footer(
                                     showBack = state.pageIndex > 0,
-                                    backLabel = content.backLabel ?: Defaults.BACK,
-                                    nextLabel = if (host.isLastPage()) content.submitLabel ?: Defaults.SUBMIT else content.nextLabel ?: Defaults.NEXT,
-                                    nextEnabled = isPageValid(state.pageSteps, state.answers),
+                                    backLabel = content.backLabel ?: texts?.back ?: Defaults.BACK,
+                                    nextLabel = if (host.isLastPage()) content.submitLabel ?: texts?.submit ?: Defaults.SUBMIT else content.nextLabel ?: texts?.next ?: Defaults.NEXT,
+                                    nextEnabled = isPageValid(state.pageSteps, state.answers) && !host.probing,
                                     onBack = host::back,
                                     onNext = host::submitPage,
                                 )
@@ -184,21 +312,34 @@ internal fun FeedbackForm(host: FormHost, modifier: Modifier = Modifier) {
                         }
                     }
                 }
-                if (host.closable) CloseButton(Modifier.align(Alignment.TopEnd), host::close)
+                if (host.closable) CloseButton(Modifier.align(Alignment.TopEnd), texts?.close ?: "Close", host::close)
             }
         }
-    }
+    } }
 }
 
 @Composable
-private fun Header(pageIndex: Int, pageCount: Int, paged: Boolean, ending: Boolean, closable: Boolean) {
+internal fun Header(
+    pageIndex: Int, pageCount: Int, paged: Boolean, ending: Boolean, closable: Boolean,
+    texts: BuiltinTexts? = null, language: (@Composable () -> Unit)? = null,
+) {
     val brand = LocalBrand.current
-    if (pageCount <= 1) { Spacer(Modifier.height(if (closable) 30.dp else 0.dp)); return }
-    val label = if (ending) "Done" else "${if (paged) "Page" else "Question"} ${pageIndex + 1} of $pageCount"
+    if (pageCount <= 1 && language == null) { Spacer(Modifier.height(if (closable) 30.dp else 0.dp)); return }
+    val label = if (texts != null) {
+        if (ending) texts.done else (if (paged) texts.pageOf else texts.questionOf).replace("{n}", "${pageIndex + 1}").replace("{total}", "$pageCount")
+    } else if (ending) "Done" else "${if (paged) "Page" else "Question"} ${pageIndex + 1} of $pageCount"
     Column {
-        BasicText(label, Modifier.heightIn(min = 24.dp).padding(end = 36.dp, top = 4.dp), style = text(12.sp, FontWeight.SemiBold, Crisp.Muted))
+        if (language != null) {
+            Row(Modifier.fillMaxWidth().padding(end = if (closable) 36.dp else 0.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (pageCount > 1) BasicText(label, Modifier.weight(1f).heightIn(min = 24.dp).padding(top = 4.dp), style = text(12.sp, FontWeight.SemiBold, Crisp.Muted))
+                else Spacer(Modifier.weight(1f))
+                language()
+            }
+        } else {
+            BasicText(label, Modifier.heightIn(min = 24.dp).padding(end = 36.dp, top = 4.dp), style = text(12.sp, FontWeight.SemiBold, Crisp.Muted))
+        }
         Spacer(Modifier.height(10.dp))
-        Row(Modifier.fillMaxWidth().padding(bottom = 18.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        if (pageCount > 1) Row(Modifier.fillMaxWidth().padding(bottom = 18.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             repeat(pageCount) { i ->
                 Box(Modifier.weight(1f).height(4.dp).background(if (ending || i <= pageIndex) brand.color else Crisp.Track, RoundedCornerShape(4.dp)))
             }
@@ -207,9 +348,9 @@ private fun Header(pageIndex: Int, pageCount: Int, paged: Boolean, ending: Boole
 }
 
 @Composable
-private fun CloseButton(modifier: Modifier, onClose: () -> Unit) {
+internal fun CloseButton(modifier: Modifier, label: String, onClose: () -> Unit) {
     Box(
-        modifier.size(36.dp).semantics { contentDescription = "Close" }.tappable(false, Role.Button, onClick = onClose),
+        modifier.size(36.dp).semantics { contentDescription = label }.tappable(false, Role.Button, onClick = onClose),
         contentAlignment = Alignment.Center,
     ) { BasicText("×", style = text(22.sp, color = Crisp.Muted)) }
 }
@@ -227,7 +368,9 @@ private fun Footer(showBack: Boolean, backLabel: String, nextLabel: String, next
                     .tappable(false, Role.Button, onClick = onBack)
                     .padding(horizontal = if (wide) 18.dp else 0.dp),
                 contentAlignment = Alignment.Center,
-            ) { BasicText(if (wide) "←  $backLabel" else "←", style = text(15.sp, FontWeight.SemiBold, Crisp.ScaleText)) }
+            ) {
+                val arrow = if (LocalLayoutDirection.current == LayoutDirection.Rtl) "→" else "←"
+                BasicText(if (wide) "$arrow  $backLabel" else arrow, style = text(15.sp, FontWeight.SemiBold, Crisp.ScaleText)) }
         }
         if (wide) Spacer(Modifier.weight(1f))
         Box(
@@ -255,7 +398,7 @@ private fun Thanks(title: String, subtitle: String) {
 }
 
 @Composable
-private fun ReviewCard(p: ReviewPresenter) {
+internal fun ReviewCard(p: ReviewPresenter) {
     val brand = LocalBrand.current
     val accent = parseHexColor(p.themeColor) ?: brand.color
     val on = brandColors(p.themeColor ?: "").onColor.takeIf { parseHexColor(p.themeColor) != null } ?: brand.onColor

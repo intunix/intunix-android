@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.intunix.sdk.internal.newId
 import com.intunix.sdk.internal.parseFeedbackContent
+import com.intunix.sdk.ui.ChatForm
 import com.intunix.sdk.ui.FeedbackForm
 import com.intunix.sdk.ui.FormHost
 import com.intunix.sdk.ui.FormTheme
@@ -32,28 +33,31 @@ fun IntunixForm(
     context: Map<String, Any?>? = null,
     /** Light/dark for this form; null = [Intunix.setTheme] / console lock / the app. */
     theme: IntunixTheme? = null,
+    /** Language to show a multi-language form in, before the visitor's own choice; null = [Intunix.setLocale] / device. */
+    locale: String? = null,
     onFinished: (() -> Unit)? = null,
 ) {
     val app = LocalContext.current.applicationContext
     // Survives rotation and list recycling, so answers stay and the impression is reported once.
     val holder = viewModel<FormHolder>(key = "intunix-form-$form") { FormHolder() }
     val latestContext by rememberUpdatedState(context)
+    val latestLocale by rememberUpdatedState(locale)
     val latestOnFinished by rememberUpdatedState(onFinished)
     LaunchedEffect(form) {
         if (holder.host != null || holder.done) return@LaunchedEffect
         val client = Intunix.clientOrNull() ?: return@LaunchedEffect
         val exp = client.resolve(form) ?: return@LaunchedEffect
-        val content = parseFeedbackContent(exp.content) ?: return@LaunchedEffect
+        if (parseFeedbackContent(exp.content) == null) return@LaunchedEffect
         val ctx = client.contextFor(exp, latestContext)
         val responseId = newId()
-        holder.host = FormHost(exp, content, client.callbacks(exp, ctx, responseId), { openExternal(app, it) }) { result ->
+        holder.host = FormHost(exp, client.callbacks(exp, ctx, responseId, latestLocale), { openExternal(app, it) }) { result ->
             client.settle(exp, ctx, result, responseId)
             holder.done = true
             latestOnFinished?.invoke()
         }
     }
     val h = holder.host
-    if (h != null && !holder.done) FormTheme(h.content.brand, theme, hostDarkOverride = LocalHostDark.current) { FeedbackForm(h, modifier) }
+    if (h != null && !holder.done) FormTheme(h.content.brand, theme, hostDarkOverride = LocalHostDark.current) { if (h.chat != null) ChatForm(h, modifier) else FeedbackForm(h, modifier) }
 }
 
 /** Wrappers whose UI theme the SDK cannot see (Flutter) say whether the screen is dark. */
