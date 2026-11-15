@@ -47,6 +47,8 @@ private fun content(steps: List<JSONObject>, thanksTitle: String? = null): Feedb
         .put("steps", JSONArray(steps)).also { o -> thanksTitle?.let { o.put("thanks", JSONObject().put("title", it)) } })!!
 private fun step(o: JSONObject) = parseStep(o)!!
 private fun nia(t: String) = ChatMessage("nia", t)
+private val List<ChatMessage>.bare get() = map { it.copy(source = null) }
+private val ChatMessage.bare get() = copy(source = null)
 private fun a(id: String, v: Int) = Answer(id, "nps", AnswerValue.Num(v))
 private fun free(id: String, t: String) = Answer(id, "followup", AnswerValue.Text("free", t))
 
@@ -80,7 +82,7 @@ class ControllerTest {
         p.await()
         assertEquals(listOf(TurnRequest("cid-12345", 0, "resume", null, "en")), m.requests)
         val s = m.ctl.state()
-        assertEquals(listOf(nia("Hi")), s.messages)
+        assertEquals(listOf(nia("Hi")), s.messages.bare)
         assertEquals(S1, s.input)
         assertFalse(s.pending)
         assertFalse(s.local)
@@ -90,7 +92,7 @@ class ControllerTest {
         val transcript = listOf(nia("Hi"), ChatMessage("respondent", "9"), nia("Why?"))
         val m = make(reply(5, "ignored", input = S3j.toString()).put("transcript", JSONArray(transcript.map { JSONObject().put("role", it.role).put("text", it.text) })))
         m.ctl.start()
-        assertEquals(transcript, m.ctl.state().messages)
+        assertEquals(transcript, m.ctl.state().messages.bare)
     }
 
     @Test fun startIsANoOpTheSecondTimeAndADoneResumeShowsTheTranscript() = runTest {
@@ -99,7 +101,7 @@ class ControllerTest {
         m.ctl.start(); m.ctl.start()
         assertEquals(1, m.requests.size)
         val s = m.ctl.state()
-        assertTrue(s.done); assertNull(s.input); assertEquals(transcript, s.messages)
+        assertTrue(s.done); assertNull(s.input); assertEquals(transcript, s.messages.bare)
     }
 
     @Test fun answerAppendsTheRespondentBubbleSendsNextTurnThenShowsTheReply() = runTest {
@@ -108,7 +110,7 @@ class ControllerTest {
         m.ctl.start()
         val p = async { m.ctl.answer(a("s1", 9)) }
         runCurrent()
-        assertEquals(listOf(ChatMessage("respondent", "9")), m.ctl.roles("respondent"))
+        assertEquals(listOf(ChatMessage("respondent", "9")), m.ctl.roles("respondent").bare)
         assertTrue(m.ctl.state().pending)
         gate.complete(reply(5, "Thanks", input = S3j.toString(), answered = 1))
         p.await()
@@ -237,7 +239,7 @@ class ControllerTest {
         m.ctl.start()
         m.ctl.skip()
         assertTrue(m.ctl.state().local); assertEquals(S1, m.ctl.state().input)
-        assertEquals(listOf(nia("Q s1")), m.ctl.state().messages)
+        assertEquals(listOf(nia("Q s1")), m.ctl.state().messages.bare)
     }
 
     @Test fun transportFailureOnStartRunsTheWholeFormLocallyWelcomeFirst() = runTest {
@@ -245,7 +247,7 @@ class ControllerTest {
         m.ctl.start()
         val s = m.ctl.state()
         assertTrue(s.local); assertFalse(s.pending); assertFalse(s.done)
-        assertEquals(listOf(nia("Welcome"), nia("Q s1")), s.messages)
+        assertEquals(listOf(nia("Welcome"), nia("Q s1")), s.messages.bare)
         assertEquals(S1, s.input)
         assertEquals(0 to 2, s.answered to s.total)
         assertEquals(1, m.requests.size)
@@ -257,12 +259,12 @@ class ControllerTest {
         m.ctl.answer(a("s1", 8))
         val s = m.ctl.state()
         assertTrue(s.done); assertNull(s.input); assertTrue(s.local)
-        assertEquals(nia("Cheers"), s.messages.last())
+        assertEquals(nia("Cheers"), s.messages.last().bare)
         assertTrue(m.ctl.result().completed)
         val c = make(RuntimeException("down"), c = content(listOf(S1j)), config = ConversationConfig("conversational", null, null, "All done", null))
         c.ctl.start()
         c.ctl.answer(a("s1", 8))
-        assertEquals(nia("All done"), c.ctl.state().messages.last())
+        assertEquals(nia("All done"), c.ctl.state().messages.last().bare)
     }
 
     @Test fun localSkipMarksTheStepSkippedAndMovesOnRequiredCannotBeSkipped() = runTest {
@@ -602,18 +604,70 @@ class ControllerTest {
         m.ctl.start()
         m.ctl.setLanguage("bn", content(listOf(S1j)), ConversationConfig("conversational", null, null, "সব শেষ", null))
         m.ctl.answer(a("s1", 8))
-        assertEquals(nia("সব শেষ"), m.ctl.state().messages.last())
+        assertEquals(nia("সব শেষ"), m.ctl.state().messages.last().bare)
     }
 
-    @Test fun setLanguageLeavesInputUntouchedAndSilentOnAServerTurn() = runTest {
-        val m = make(reply(1, input = S1j.toString()))
+    private val BN = content(listOf(nps("s1", title = "প্রথম"), nps("s3", title = "তৃতীয়")))
+    private val cfgBn = ConversationConfig("conversational", null, "স্বাগতম", "শেষ", null)
+    private val cfgEn = ConversationConfig("conversational", null, "Welcome", "Done", null)
+    private val probeJ = followup("probe:1", true, "Why?").toString()
+
+    @Test fun setLanguageServerInputWithAPredefinedIdIsSwappedProbesStay() = runTest {
+        val m = make(reply(1, input = S1j.toString()), reply(2, input = probeJ))
         m.ctl.start()
-        val before = m.ctl.state().input
-        var n = 0
-        m.ctl.subscribe { n++ }
         m.ctl.setLanguage("bn", content(listOf(nps("s1", title = "নতুন"))), null)
-        assertSame(before, m.ctl.state().input)
-        assertEquals(0, n)
+        assertEquals("নতুন", m.ctl.state().input?.title)
+        m.ctl.answer(a("s1", 9))
+        val probe = m.ctl.state().input
+        m.ctl.setLanguage("en", content(listOf(S1j)), null)
+        assertSame(probe, m.ctl.state().input)
+    }
+
+    @Test fun setLanguageWelcomeQuestionsAndAnswersReRenderProbesStay() = runTest {
+        val m = make(
+            reply(1, "Welcome", "Q s1", input = S1j.toString()),
+            reply(2, "Why 9?", input = probeJ),
+            reply(3, "Q s3", input = S3j.toString()),
+            c = content(listOf(S1j, S3j)), config = cfgEn,
+        )
+        m.ctl.start()
+        m.ctl.answer(a("s1", 9))
+        m.ctl.answer(free("probe:1", "because"))
+        m.ctl.setLanguage("bn", BN, cfgBn)
+        assertEquals(listOf("স্বাগতম", "প্রথম", "9", "Why 9?", "because", "তৃতীয়"), m.ctl.texts())
+        assertEquals("তৃতীয়", m.ctl.state().input?.title)
+    }
+
+    @Test fun setLanguageAChoiceAnswerTakesItsLabelFromTheNewLanguage() = runTest {
+        fun csat(l: String) = stepJson("s1", ""","labels":$l""", "csat", "Q")
+        val en = csat("""["Bad","Ok","Good","Great","Best"]""")
+        val m = make(reply(1, "Q", input = en.toString()), reply(2), c = content(listOf(en)))
+        m.ctl.start()
+        m.ctl.answer(Answer("s1", "csat", AnswerValue.Num(2)))
+        assertEquals("Ok", m.ctl.texts().last())
+        m.ctl.setLanguage("bn", content(listOf(csat("""["খারাপ","ঠিক","ভালো","দারুণ","সেরা"]"""))), null)
+        assertEquals("ঠিক", m.ctl.texts().last())
+    }
+
+    @Test fun setLanguageTheCompletionMessageReRenders() = runTest {
+        val m = make(RuntimeException("down"), c = content(listOf(S1j)), config = cfgEn)
+        m.ctl.start()
+        m.ctl.answer(a("s1", 8))
+        assertEquals("Done", m.ctl.texts().last())
+        m.ctl.setLanguage("bn", content(listOf(S1j)), cfgBn)
+        assertEquals("শেষ", m.ctl.texts().last())
+    }
+
+    @Test fun setLanguageARestoredTranscriptIsTaggedSoItReRendersToo() = runTest {
+        val tr = listOf(nia("Welcome"), nia("Q s1"), ChatMessage("respondent", "9"), nia("Why?"))
+        val m = make(
+            reply(1, input = S3j.toString()).put("transcript", JSONArray(tr.map { JSONObject().put("role", it.role).put("text", it.text) }))
+                .put("answers", JSONArray().put(JSONObject("""{"stepId":"s1","kind":"nps","value":9}"""))),
+            c = content(listOf(S1j, S3j)), config = cfgEn,
+        )
+        m.ctl.start()
+        m.ctl.setLanguage("bn", BN, cfgBn)
+        assertEquals(listOf("স্বাগতম", "প্রথম", "9", "Why?"), m.ctl.texts())
     }
 
     private suspend fun TestScope.localOn(c: FeedbackContent): ConversationController {

@@ -330,7 +330,7 @@ internal fun Header(
     } else if (ending) "Done" else "${if (paged) "Page" else "Question"} ${pageIndex + 1} of $pageCount"
     Column {
         if (language != null) {
-            Row(Modifier.fillMaxWidth().padding(end = if (closable) 36.dp else 0.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().padding(end = if (closable) 28.dp else 0.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (pageCount > 1) BasicText(label, Modifier.weight(1f).heightIn(min = 24.dp).padding(top = 4.dp), style = text(12.sp, FontWeight.SemiBold, Crisp.Muted))
                 else Spacer(Modifier.weight(1f))
                 language()

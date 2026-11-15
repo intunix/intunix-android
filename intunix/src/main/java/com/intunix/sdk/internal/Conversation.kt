@@ -47,7 +47,10 @@ internal data class TurnRequest(
     }
 }
 
-internal data class ChatMessage(val role: String /* "nia" | "respondent" */, val text: String)
+/** Where a bubble's text came from: kind "welcome" | "completion" | "step" | "answer" (the last two with a [stepId]). Only form-owned text re-renders on a language switch. */
+internal data class MessageSource(val kind: String, val stepId: String? = null)
+
+internal data class ChatMessage(val role: String /* "nia" | "respondent" */, val text: String, val source: MessageSource? = null)
 
 internal data class TurnReply(
     val messages: List<String>,

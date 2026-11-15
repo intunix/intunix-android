@@ -70,15 +70,53 @@ internal class ConversationController(
 
     fun state(): ConversationState = state
 
-    /** Later requests carry `lang` and local mode reads `content`; shown messages stay as they were. */
+    /**
+     * Later requests carry `lang`. Bubbles that came from the form (welcome, predefined questions, completion,
+     * answers to predefined steps) are re-rendered; AI follow-ups and other server text stay as asked.
+     */
     fun setLanguage(lang: String, content: FeedbackContent, config: ConversationConfig?) {
         locale = lang
         this.content = content
-        // Local mode reads welcome/completion messages from here.
         if (config != null) handle = ConversationHandle(config, handle.transport, handle.conversationId, handle.scope)
-        val s = state
-        if (!s.local || s.input == null) return
-        content.steps.firstOrNull { it.id == s.input.id }?.let { same -> set { copy(input = same, inputJson = null) } }
+        val old = state.messages
+        val messages = old.map { m -> sourceText(m.source)?.takeIf { it != m.text }?.let { m.copy(text = it) } ?: m }
+        val same = state.input?.let { i -> content.steps.firstOrNull { it.id == i.id } }
+        if (messages != old || (same != null && same !== state.input)) {
+            set { if (same != null) copy(messages = messages, input = same, inputJson = null) else copy(messages = messages) }
+        }
+    }
+
+    private fun completionText() = handle.config.completionMessage ?: content.thanks?.title ?: Defaults.THANKS_TITLE
+
+    private fun sourceText(src: MessageSource?): String? {
+        src ?: return null
+        return when (src.kind) {
+            "welcome" -> handle.config.welcomeMessage
+            "completion" -> completionText()
+            else -> {
+                val step = content.steps.firstOrNull { it.id == src.stepId }
+                if (src.kind == "step") step?.title
+                else answers.firstOrNull { it.stepId == src.stepId }?.let { a -> step?.let { answerLabel(it, a) } }
+            }
+        }
+    }
+
+    /** Server text carries no origin: match it against the form's own texts as they were when it arrived. */
+    private fun tagServer(text: String, done: Boolean): MessageSource? {
+        if (text == handle.config.welcomeMessage) return MessageSource("welcome")
+        content.steps.firstOrNull { it.title == text }?.let { return MessageSource("step", it.id) }
+        return if (done && text == completionText()) MessageSource("completion") else null
+    }
+
+    /** A restored respondent bubble right after a predefined question is that question's answer. */
+    private fun tagTranscript(list: List<ChatMessage>, done: Boolean): List<ChatMessage> = list.mapIndexed { i, m ->
+        if (m.source != null) m
+        else if (m.role == "nia") tagServer(m.text, done && i == list.lastIndex)?.let { m.copy(source = it) } ?: m
+        else {
+            val prev = list.getOrNull(i - 1)
+            val id = prev?.takeIf { it.role == "nia" }?.let { p -> content.steps.firstOrNull { it.title == p.text }?.id }
+            if (id != null && answers.any { it.stepId == id }) m.copy(source = MessageSource("answer", id)) else m
+        }
     }
 
     fun subscribe(cb: () -> Unit): () -> Unit {
@@ -108,7 +146,8 @@ internal class ConversationController(
         if (!isAnswerValid(input, a)) return false
         if (isEmptyAnswer(a)) { skip(); return false }
         answers = answers.filter { it.stepId != a.stepId } + a
-        set { copy(messages = messages + ChatMessage("respondent", answerLabel(input, a))) }
+        val source = if (content.steps.any { it.id == a.stepId }) MessageSource("answer", a.stepId) else null
+        set { copy(messages = messages + ChatMessage("respondent", answerLabel(input, a), source)) }
         if (state.local) advanceLocal() else send("answer", a)
         return true
     }
@@ -208,10 +247,10 @@ internal class ConversationController(
     }
 
     private fun applyReply(reply: TurnReply, isStart: Boolean) {
-        val added = reply.messages.map { ChatMessage("nia", it) }
+        val added = reply.messages.map { ChatMessage("nia", it, tagServer(it, reply.done)) }
         reply.input?.let { seen[it.id] = it }
         if (isStart) seed(reply)
-        val restored = if (isStart) reply.transcript?.takeIf { it.isNotEmpty() } else null
+        val restored = if (isStart) reply.transcript?.takeIf { it.isNotEmpty() }?.let { tagTranscript(it, reply.done) } else null
         set {
             copy(
                 messages = restored ?: if (isStart) added else messages + added,
@@ -238,14 +277,14 @@ internal class ConversationController(
     private fun goLocal(action: String) {
         set { copy(local = true, pending = false) }
         val welcome = handle.config.welcomeMessage
-        if (action == "resume" && state.messages.isEmpty() && !welcome.isNullOrEmpty()) pushNia(welcome)
+        if (action == "resume" && state.messages.isEmpty() && !welcome.isNullOrEmpty()) pushNia(welcome, source = MessageSource("welcome"))
         // The failed action consumed the current input, so move to the next predefined step.
         advanceLocal(true)
     }
 
     private fun advanceLocal(dedupe: Boolean = false) {
         val next = visibleSteps().firstOrNull { !answered(it.id) && it.id !in skipped }
-        pushNia(next?.title ?: (handle.config.completionMessage ?: content.thanks?.title ?: Defaults.THANKS_TITLE), dedupe)
+        pushNia(next?.title ?: completionText(), dedupe, if (next != null) MessageSource("step", next.id) else MessageSource("completion"))
         val steps = visibleSteps()
         val n = steps.count { answered(it.id) || it.id in skipped }
         set { if (next != null) copy(input = next, inputJson = null, answered = n, total = steps.size) else copy(input = null, inputJson = null, done = true, answered = n, total = steps.size) }
@@ -266,10 +305,10 @@ internal class ConversationController(
     private fun answered(id: String) = answers.any { it.stepId == id }
 
     /** `dedupe`: skip a message the server already showed as the last one. */
-    private fun pushNia(text: String, dedupe: Boolean = false) {
+    private fun pushNia(text: String, dedupe: Boolean = false, source: MessageSource? = null) {
         val last = state.messages.lastOrNull()
         if (dedupe && last?.role == "nia" && last.text == text) return
-        set { copy(messages = messages + ChatMessage("nia", text)) }
+        set { copy(messages = messages + ChatMessage("nia", text, source)) }
     }
 
     private fun set(patch: ConversationState.() -> ConversationState) {
