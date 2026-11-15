@@ -162,13 +162,13 @@ private fun FormFrame(modal: Boolean, visible: MutableTransitionState<Boolean>, 
         if (modal) {
             Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).padding(16.dp), contentAlignment = Alignment.Center) {
                 AnimatedVisibility(visible, enter = fadeIn(tween(150)) + scaleIn(tween(180), initialScale = 0.96f), exit = fadeOut(tween(120))) {
-                    Card(Modifier.widthIn(max = 460.dp), RoundedCornerShape(16.dp), 24) { if (host.chat != null) ChatForm(host) else FeedbackForm(host) }
+                    Card(Modifier.widthIn(max = 460.dp), RoundedCornerShape(16.dp), 24, scrolls = host.chat == null) { if (host.chat != null) ChatForm(host) else FeedbackForm(host) }
                 }
             }
         } else {
             Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.ime), contentAlignment = Alignment.BottomCenter) {
                 AnimatedVisibility(visible, enter = slideInVertically(tween(220)) { it }, exit = slideOutVertically(tween(180)) { it }) {
-                    Card(Modifier.widthIn(max = 720.dp), RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp), 20, sheet = true) { if (host.chat != null) ChatForm(host) else FeedbackForm(host) }
+                    Card(Modifier.widthIn(max = 720.dp), RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp), 20, sheet = true, scrolls = host.chat == null) { if (host.chat != null) ChatForm(host) else FeedbackForm(host) }
                 }
             }
         }
@@ -176,14 +176,14 @@ private fun FormFrame(modal: Boolean, visible: MutableTransitionState<Boolean>, 
 }
 
 @Composable
-private fun Card(modifier: Modifier, shape: RoundedCornerShape, pad: Int, sheet: Boolean = false, content: @Composable () -> Unit) {
+private fun Card(modifier: Modifier, shape: RoundedCornerShape, pad: Int, sheet: Boolean = false, scrolls: Boolean = true, content: @Composable () -> Unit) {
     BoxWithConstraints {
         Box(
             modifier.fillMaxWidth().heightIn(max = maxHeight * if (sheet) 0.9f else 1f)
                 .shadow(24.dp, shape, clip = false)
                 .background(Crisp.Card, shape)
                 .clickable(remember { MutableInteractionSource() }, null) {}
-                .verticalScroll(rememberScrollState())
+                .then(if (scrolls) Modifier.verticalScroll(rememberScrollState()) else Modifier) // a chat card has one scroll area: its log
                 .then(if (sheet) Modifier.windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets(0))) else Modifier)
                 .padding(pad.dp),
         ) { content() }

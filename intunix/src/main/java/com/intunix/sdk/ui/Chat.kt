@@ -80,9 +80,10 @@ internal fun ChatView(
     BoxWithConstraints(modifier.fillMaxWidth()) {
         CompositionLocalProvider(LocalWide provides (maxWidth >= Crisp.WideAt)) {
             val pages = maxOf(state.total, 1)
+            val bounded = this@BoxWithConstraints.constraints.hasBoundedHeight
             Column(Modifier.fillMaxWidth()) {
                 Header(if (state.done) pages else minOf(state.answered, pages - 1), pages, true, state.done, closable, texts, language)
-                Log(state, labels)
+                Log(state, labels, if (bounded) Modifier.weight(1f, fill = false) else Modifier.heightIn(max = 360.dp))
                 if (input != null && !state.pending && !state.done) ChatInput(input, labels, onAnswer)
                 if (footer != null) footer()
                 else Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -97,13 +98,13 @@ internal fun ChatView(
 }
 
 @Composable
-private fun Log(state: ConversationState, labels: ChatLabels) {
+private fun Log(state: ConversationState, labels: ChatLabels, size: Modifier) {
     val brand = LocalBrand.current
     val scroll = rememberScrollState()
     // Keyed on maxValue: it grows only once the new bubble is laid out.
     LaunchedEffect(scroll.maxValue) { scroll.scrollTo(scroll.maxValue) }
     Column(
-        Modifier.fillMaxWidth().heightIn(max = 360.dp).verticalScroll(scroll)
+        Modifier.fillMaxWidth().then(size).verticalScroll(scroll)
             .semantics { contentDescription = labels.log },
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
