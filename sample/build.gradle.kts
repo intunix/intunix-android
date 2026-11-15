@@ -15,12 +15,11 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-        // Put intunix.apiKey=ck_... and intunix.form=<slug> in local.properties to try a real form.
+        // Put intunix.apiKey=ck_... in local.properties to try a real key.
         val props = Properties().apply {
             rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
         }
         buildConfigField("String", "API_KEY", "\"${props.getProperty("intunix.apiKey", "ck_mock")}\"")
-        buildConfigField("String", "FORM", "\"${props.getProperty("intunix.form", "lang-chat")}\"")
         buildConfigField("String", "API_HOST", "\"${props.getProperty("intunix.apiHost", "http://10.0.2.2:4100")}\"")
     }
     buildFeatures { compose = true; buildConfig = true }
