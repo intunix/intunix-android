@@ -32,7 +32,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.collapse
+import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.LocaleList
@@ -59,11 +60,14 @@ internal fun LanguageSwitcher(current: String, options: List<LanguageInfo>, labe
         else if (closed[0]) runCatching { focus.requestFocus() }
     }
     Box {
+        Box(
+            Modifier.heightIn(min = 48.dp).focusRequester(focus)
+                .semantics { contentDescription = "$label, $name"; if (open) collapse { open = false; true } else expand { open = true; true } }
+                .clickable(role = Role.Button) { open = !open },
+            contentAlignment = Alignment.Center,
+        ) {
         Row(
             Modifier.height(36.dp).clip(RoundedCornerShape(10.dp)).border(1.dp, palette.border, RoundedCornerShape(10.dp))
-                .focusRequester(focus)
-                .semantics { contentDescription = "$label, $name"; stateDescription = if (open) "Expanded" else "Collapsed" }
-                .clickable(role = Role.Button) { open = !open }
                 .padding(horizontal = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -72,9 +76,10 @@ internal fun LanguageSwitcher(current: String, options: List<LanguageInfo>, labe
             BasicText(name, style = text(13.sp, FontWeight.Medium, palette.scaleText).copy(localeList = LocaleList(current)))
             CaretIcon(palette.muted, Modifier.size(14.dp))
         }
+        }
         if (open) Popup(
             alignment = Alignment.TopEnd,
-            offset = IntOffset(0, with(LocalDensity.current) { 40.dp.roundToPx() }),
+            offset = IntOffset(0, with(LocalDensity.current) { 46.dp.roundToPx() }),
             onDismissRequest = { open = false },
             properties = PopupProperties(focusable = true),
         ) {

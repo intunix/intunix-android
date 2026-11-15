@@ -35,7 +35,7 @@ internal class LanguageStore(private val store: KeyValueStore) {
 internal class ConversationIds(private val store: KeyValueStore) {
     fun idFor(formId: String): String {
         val all = read()
-        return all.str(formId) ?: newId().also { store.set(KEY, all.put(formId, it).toString()) }
+        return all.str(formId)?.takeIf { it.isNotEmpty() } ?: newId().also { store.set(KEY, all.put(formId, it).toString()) }
     }
     fun clear(formId: String) { val all = read(); if (all.has(formId)) store.set(KEY, all.apply { remove(formId) }.toString()) }
     fun clearAll() = store.remove(KEY)

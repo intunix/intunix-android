@@ -166,7 +166,22 @@ class FormHostLanguageTest {
         assertTrue(r.host.chatState().pending)
         r.host.close()
         assertEquals("dismissed", r.results.single().outcome)
+        gate.complete(turn(1))
         runCurrent()
         assertEquals("end", wire.sent.last().action)
+    }
+
+    @Test fun chatEndWhileAnswerInFlightCarriesFreshTurn() = runTest {
+        val gate = CompletableDeferred<JSONObject>()
+        val wire = Wire { if (it.action == "answer") gate else turn(1, probe) }
+        val r = host(json(true), conversation = ConversationConfig("conversational", null, null, null, null), wire = wire)
+        r.host.impression()
+        runCurrent()
+        r.host.sendChat(Answer("probe:nps:1", "followup", AnswerValue.Text("free", "hi")))
+        runCurrent()
+        r.host.close()
+        gate.complete(turn(2))
+        runCurrent()
+        assertEquals(2, wire.sent.last { it.action == "end" }.turn)
     }
 }

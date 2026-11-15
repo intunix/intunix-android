@@ -127,7 +127,7 @@ internal class FormHost(
     fun impression() {
         if (impressed) return
         impressed = true
-        chat?.let { c -> scope.launch { c.start() } }
+        chat?.let { c -> handle!!.scope.launch { c.start() } }
         cb.onImpression()
     }
 
@@ -193,10 +193,10 @@ internal class FormHost(
 
     fun sendChat(a: Answer) {
         val c = chat ?: return
-        scope.launch { if (c.answer(a) && !settled) cb.onResponse(a) }
+        handle!!.scope.launch { if (c.answer(a) && !settled) cb.onResponse(a) }
     }
 
-    fun skipChat() { chat?.let { c -> scope.launch { c.skip() } } }
+    fun skipChat() { chat?.let { c -> handle!!.scope.launch { c.skip() } } }
 
     /** Thumbs / PMF / smileys submit on tap only when the whole form is that one question. */
     fun autoSubmit(): Boolean {

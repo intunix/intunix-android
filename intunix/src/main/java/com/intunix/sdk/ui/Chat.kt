@@ -104,13 +104,14 @@ private fun Log(state: ConversationState, labels: ChatLabels) {
     LaunchedEffect(scroll.maxValue) { scroll.scrollTo(scroll.maxValue) }
     Column(
         Modifier.fillMaxWidth().heightIn(max = 360.dp).verticalScroll(scroll)
-            .semantics { liveRegion = LiveRegionMode.Polite; contentDescription = labels.log },
+            .semantics { contentDescription = labels.log },
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         state.messages.forEachIndexed { i, m ->
             val nia = m.role == "nia"
             if (nia && state.messages.getOrNull(i - 1)?.role != "nia") NameLabel(labels.name)
-            Box(Modifier.fillMaxWidth(), contentAlignment = if (nia) Alignment.CenterStart else Alignment.CenterEnd) {
+            val live = nia && i == state.messages.lastIndex
+            Box(Modifier.fillMaxWidth().then(if (live) Modifier.semantics { liveRegion = LiveRegionMode.Polite } else Modifier), contentAlignment = if (nia) Alignment.CenterStart else Alignment.CenterEnd) {
                 Bubble(if (nia) brand.soft else brand.color) {
                     BasicText(m.text, style = text(14.sp, color = if (nia) Crisp.Text else brand.onColor, lineHeight = 20.sp))
                 }
