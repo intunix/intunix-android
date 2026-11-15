@@ -60,6 +60,17 @@ fun IntunixForm(
     if (h != null && !holder.done) FormTheme(h.content.brand, theme, hostDarkOverride = LocalHostDark.current) { if (h.chat != null) ChatForm(h, modifier) else FeedbackForm(h, modifier) }
 }
 
+/** The 1.6.x signature, kept for binary compatibility with code compiled against it. */
+@Deprecated("Use the overload with `locale`.", level = DeprecationLevel.HIDDEN)
+@Composable
+fun IntunixForm(
+    form: String,
+    modifier: Modifier = Modifier,
+    context: Map<String, Any?>? = null,
+    theme: IntunixTheme? = null,
+    onFinished: (() -> Unit)? = null,
+) = IntunixForm(form, modifier, context, theme, null, onFinished)
+
 /** Wrappers whose UI theme the SDK cannot see (Flutter) say whether the screen is dark. */
 internal val LocalHostDark = androidx.compose.runtime.compositionLocalOf<Boolean?> { null }
 

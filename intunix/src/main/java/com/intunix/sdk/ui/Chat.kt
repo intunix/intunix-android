@@ -100,7 +100,8 @@ internal fun ChatView(
 private fun Log(state: ConversationState, labels: ChatLabels) {
     val brand = LocalBrand.current
     val scroll = rememberScrollState()
-    LaunchedEffect(state.messages.size, state.pending) { scroll.scrollTo(scroll.maxValue) }
+    // Keyed on maxValue: it grows only once the new bubble is laid out.
+    LaunchedEffect(scroll.maxValue) { scroll.scrollTo(scroll.maxValue) }
     Column(
         Modifier.fillMaxWidth().heightIn(max = 360.dp).verticalScroll(scroll)
             .semantics { liveRegion = LiveRegionMode.Polite; contentDescription = labels.log },
