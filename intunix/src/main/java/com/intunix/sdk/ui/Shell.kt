@@ -157,7 +157,7 @@ private fun FormFrame(modal: Boolean, visible: MutableTransitionState<Boolean>, 
     Box(Modifier.fillMaxSize()) {
         AnimatedVisibility(visible, enter = fadeIn(tween(150)), exit = fadeOut(tween(150))) {
             Box(Modifier.fillMaxSize().background(if (modal) Crisp.Backdrop else Crisp.Backdrop.copy(alpha = 0.25f))
-                .clickable(outside, null) { host.close() })
+                .clickable(outside, null) { if (modal) host.close() }) // like web: only a modal closes on an outside tap
         }
         if (modal) {
             Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).padding(16.dp), contentAlignment = Alignment.Center) {
