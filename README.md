@@ -31,6 +31,8 @@ dependencies {
 
 ## Set up
 
+> **Use a publishable key** (`int_pk_...`, created in Settings → API keys as *Publishable*). It is safe to ship in an app: it can only load forms and send responses and events. Never put a secret key (`int_sk_...`) in an app or website; those are for server APIs such as Auto Send and user data deletion.
+
 Call `init` once, in your `Application`:
 
 ```kotlin
@@ -106,7 +108,7 @@ dark, and its dark background colour can be set. Override from code (code wins o
 the console):
 
 ```kotlin
-Intunix.init(this, "int_sk_xxx", IntunixOptions(theme = IntunixTheme.Auto))
+Intunix.init(this, "int_pk_xxx", IntunixOptions(theme = IntunixTheme.Auto))
 Intunix.setTheme(IntunixTheme.Dark)   // any time; open forms switch at once
 IntunixForm("nps-q3", theme = IntunixTheme.Light)
 ```
@@ -129,7 +131,7 @@ Right-to-left languages (Arabic, Persian, Hebrew, Urdu) lay out right to left na
 Responses carry the `language` they were answered in.
 
 ```kotlin
-Intunix.init(this, "int_sk_xxx", IntunixOptions(locale = "bn"))   // the app's language
+Intunix.init(this, "int_pk_xxx", IntunixOptions(locale = "bn"))   // the app's language
 Intunix.setLocale("pt-BR")                                        // any time; replaces the remembered choice
 IntunixForm("nps-q3", locale = "ar")                              // this form only
 ```
